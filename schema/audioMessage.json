@@ -1,0 +1,42 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "288195591053494",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "919453225060",
+              "phone_number_id": "366490143206901"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "R. Animesh"
+                },
+                "wa_id": "919452624111"
+              }
+            ],
+            "messages": [
+              {
+                "from": "919452624111",
+                "id": "wamid.HBgMOTE5NDUyNjI0MTExFQIAEhggQUU2QTU3NEMxQzBGOUY1QkY5RTU5ODgxNTk5MDg4QTcA",
+                "timestamp": "1725472570",
+                "type": "audio",
+                "audio": {
+                  "mime_type": "audio/ogg; codecs=opus",
+                  "sha256": "sNSIF7KLOoNNE7mxg5C59ZbZZn4pDbR5rjEjd2Tacgo=",
+                  "id": "396661229830918",
+                  "voice": true
+                }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}
