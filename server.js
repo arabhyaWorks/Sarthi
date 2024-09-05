@@ -1,6 +1,15 @@
 import express from "express";
 import axios from "axios";
 import { textToTextTranslationNMT } from "./bhashini.js";
+import { fileURLToPath } from "url";
+import path from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+import SpeechToText from "./stt.js";
+import convertOggToWav from "./ogg2wav.js";
+import downloadFile from "./downloadAudio.js";
 
 const app = express();
 app.use(express.json());
@@ -168,6 +177,15 @@ app.post("/webhook", async (req, res) => {
       await sendMessage(business_phone_number_id, message.from, txt);
     }
     await markMessageAsRead(business_phone_number_id, message.id);
+  } else if (message?.type === "audio" && message.audio?.voice) {
+    const audioId = message.audio.id;
+
+    try {
+      downloadAudio(business_phone_number_id, audioId, message);
+
+    } catch (error) {
+      console.error("Error in STT processing:", error);
+    }
   }
 
   res.sendStatus(200);
@@ -349,3 +367,39 @@ async function markMessageAsRead(business_phone_number_id, messageId) {
     },
   });
 }
+
+const downloadAudio = async (business_phone_number_id, audioId, message) => {
+  const url = `https://graph.facebook.com/v16.0/${audioId}`;
+  console.log("Fetching audio metadata from:", url);
+
+  // Fetch metadata for the audio file
+  const response = await axios.get(url, {
+    headers: { Authorization: `Bearer ${GRAPH_API_TOKEN}` },
+  });
+
+  // Extract the actual audio URL from the metadata
+  const audioUrl = response.data.url;
+  console.log("Actual audio URL:", audioUrl);
+
+  // Now download the actual audio file
+  const oggPath = path.join(__dirname, `${audioId}.ogg`);
+  const wavPath = path.join(__dirname, `${audioId}.wav`);
+
+  downloadFile(audioUrl, oggPath, GRAPH_API_TOKEN)
+    .then(() => convertOggToWav(oggPath, wavPath))
+    .then(async (wavPath) => {
+      console.log("Conversion to WAV successful");
+      // console.log(wavPath);
+
+      SpeechToText(audioId)
+        .then((transcribedText) => {
+          console.log("Transcription Result:", transcribedText);
+          sendMessage(business_phone_number_id, message.from, transcribedText);
+
+          // return transcribedText;
+        })
+        .catch((error) => {
+          console.error("Error occurred:", error);
+        });
+    });
+};
