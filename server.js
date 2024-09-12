@@ -1,6 +1,10 @@
 import express from "express";
 import axios from "axios";
+import bodyParser from "body-parser";
+import dotenv from "dotenv";
 import { textToTextTranslationNMT } from "./bhashini.js";
+import { languages, languageKey } from "./constants.js";
+
 import { fileURLToPath } from "url";
 import path from "path";
 
@@ -11,12 +15,31 @@ import SpeechToText from "./stt.js";
 import convertOggToWav from "./ogg2wav.js";
 import downloadFile from "./downloadAudio.js";
 
+const port = process.env.PORT || 3000;
+
+dotenv.config();
+
 const app = express();
-app.use(express.json());
+app.use(bodyParser.json());
 
-const { WEBHOOK_VERIFY_TOKEN, GRAPH_API_TOKEN, PORT } = process.env;
+// const WHATSAPP_TOKEN = process.env.GRAPH_API_TOKEN;
+// const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
+// const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
-let selectedLanguageCode = ""; // Global variable to store the selected language
+const {
+  WEBHOOK_VERIFY_TOKEN,
+  GRAPH_API_TOKEN,
+  PORT,
+  WHATSAPP_PHONE_NUMBER_ID,
+  WHATSAPP_TOKEN,
+} = process.env;
+
+let userName = "";
+let userNumber = "";
+
+let selectedLanguageCode = "en";
+let userStates = {};
+
 let shopName = ""; // Global variable to store shop name
 let stateName = ""; // Global variable to store state name
 let productLanguage = ""; // Global variable to store product language
@@ -26,169 +49,193 @@ let productPrice = ""; // Global variable to store product price
 let productDescription = ""; // Global variable to store product description
 let productVariation = ""; // Global variable to store product variation
 
-const languages = {
-  english: "en",
-  hindi: "hi",
-  kannada: "kn",
-  tamil: "ta",
-  marathi: "mr",
-  punjabi: "pa",
-  assamese: "as",
-  odia: "or",
-  bengali: "bn",
-  telugu: "te",
-};
-
 app.post("/webhook", async (req, res) => {
-  console.log("Incoming webhook message:", JSON.stringify(req.body, null, 2));
+  const body = req.body;
 
-  const message = req.body.entry?.[0]?.changes[0]?.value?.messages?.[0];
-  const business_phone_number_id =
-    req.body.entry?.[0].changes?.[0].value?.metadata?.phone_number_id;
+  if (body.object === "whatsapp_business_account") {
+    const business_phone_number_id =
+      req.body.entry?.[0].changes?.[0].value?.metadata?.phone_number_id;
 
-  if (message?.type === "text") {
-    const messageText = message.text.body.toLowerCase();
+    userName =
+      req.body.entry?.[0]?.changes[0]?.value?.contacts?.[0]?.profile?.name ||
+      "";
 
-    if (messageText === "hi") {
-      await sendWelcomeMessage(business_phone_number_id, message);
-    } else if (languages[messageText]) {
-      selectedLanguageCode = languages[messageText];
-      const selectedLanguage = Object.keys(languages).find(
-        (lang) => languages[lang] === selectedLanguageCode
-      );
-      const responseText = `You have selected ${selectedLanguage}. The ISO code is ${selectedLanguageCode}.`;
-      const translatedText = await textToTextTranslationNMT(
-        responseText,
-        selectedLanguageCode
-      );
-      await sendMessage(
-        business_phone_number_id,
-        message.from,
-        translatedText,
-        message.id
-      );
-      await sendProductCatalogingPrompt(business_phone_number_id, message.from);
-    } else if (!shopName) {
-      shopName = message.text.body;
-      const txt = await textToTextTranslationNMT(
-        "What is your state name?",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
-    } else if (!stateName) {
-      stateName = message.text.body;
-      const txt = await textToTextTranslationNMT(
-        "What is your product's language?",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
-    } else if (!productLanguage) {
-      productLanguage = message.text.body;
-      const txt = await textToTextTranslationNMT(
-        "What is your product's category?",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
-    } else if (!productCategory) {
-      productCategory = message.text.body;
-      const txt = await textToTextTranslationNMT(
-        "What is your product's title?",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
-    } else if (!productTitle) {
-      productTitle = message.text.body;
-      const txt = await textToTextTranslationNMT(
-        "What is your product's price?",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
-    } else if (!productPrice) {
-      productPrice = message.text.body;
-      const txt = await textToTextTranslationNMT(
-        "What is your product's description?",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
-    } else if (!productDescription) {
-      productDescription = message.text.body;
-      const txt = await textToTextTranslationNMT(
-        "Do you have any variations for the product?",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
-    } else if (!productVariation) {
-      productVariation = message.text.body;
-      const summaryText = `Thank you! Here is the information you provided:\nShop Name: ${shopName}\nState: ${stateName}\nProduct Language: ${productLanguage}\nProduct Category: ${productCategory}\nProduct Title: ${productTitle}\nProduct Price: ${productPrice}\nProduct Description: ${productDescription}\nProduct Variation: ${productVariation}`;
-      const translatedSummaryText = await textToTextTranslationNMT(
-        summaryText,
-        selectedLanguageCode
-      );
-      await sendMessage(
-        business_phone_number_id,
-        message.from,
-        translatedSummaryText
-      );
-    } else {
-      const txt = await textToTextTranslationNMT(
-        "Invalid selection. Please send 'hi' to start over.",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
+    userNumber =
+      req.body.entry?.[0]?.changes[0]?.value?.contacts?.[0]?.phone_number || "";
+
+    const userLanguage =
+      req.body.entry?.[0]?.changes[0]?.value?.contacts?.[0]?.profile?.locale ||
+      "en";
+
+    const userState =
+      userStates[req.body.entry?.[0]?.changes[0]?.value?.contacts?.[0]?.id] ||
+      {};
+
+    for (const entry of body.entry) {
+      const changes = entry.changes;
+      for (const change of changes) {
+        if (change.value && change.value.messages && change.value.messages[0]) {
+          const message = change.value.messages[0];
+          const senderId = message.from;
+
+          if (message?.type === "text") {
+            const messageText = message.text.body.toLowerCase();
+            // console.log("User said : ",messageText);
+            // console.log("Message object: ", message)
+            console.log(userName, message.from, userLanguage, messageText);
+            if (messageText === "hi") {
+              await sendWelcomeMessage(business_phone_number_id, message);
+            } else if (languages[messageText]) {
+              selectedLanguageCode = languages[messageText];
+              const selectedLanguage = Object.keys(languages).find(
+                (lang) => languages[lang] === selectedLanguageCode
+              );
+              const responseText = `You have selected ${selectedLanguage}. The ISO code is ${selectedLanguageCode}.`;
+              const translatedText = await textToTextTranslationNMT(
+                responseText,
+                selectedLanguageCode
+              );
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                translatedText,
+                message.id
+              );
+              await sendProductCatalogingPrompt(
+                business_phone_number_id,
+                message.from
+              );
+            } else if (!shopName) {
+              shopName = message.text.body;
+              const txt = await textToTextTranslationNMT(
+                "What is your state name?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (!stateName) {
+              stateName = message.text.body;
+              const txt = await textToTextTranslationNMT(
+                "What is your product's language?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (!productLanguage) {
+              productLanguage = message.text.body;
+              const txt = await textToTextTranslationNMT(
+                "What is your product's category?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (!productCategory) {
+              productCategory = message.text.body;
+              const txt = await textToTextTranslationNMT(
+                "What is your product's title?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (!productTitle) {
+              productTitle = message.text.body;
+              const txt = await textToTextTranslationNMT(
+                "What is your product's price?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (!productPrice) {
+              productPrice = message.text.body;
+              const txt = await textToTextTranslationNMT(
+                "What is your product's description?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (!productDescription) {
+              productDescription = message.text.body;
+              const txt = await textToTextTranslationNMT(
+                "Do you have any variations for the product?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (!productVariation) {
+              productVariation = message.text.body;
+              const summaryText = `Thank you! Here is the information you provided:\nShop Name: ${shopName}\nState: ${stateName}\nProduct Language: ${productLanguage}\nProduct Category: ${productCategory}\nProduct Title: ${productTitle}\nProduct Price: ${productPrice}\nProduct Description: ${productDescription}\nProduct Variation: ${productVariation}`;
+              const translatedSummaryText = await textToTextTranslationNMT(
+                summaryText,
+                selectedLanguageCode
+              );
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                translatedSummaryText
+              );
+            } else {
+              const txt = await textToTextTranslationNMT(
+                "Invalid selection. Please send 'hi' to start over.",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            }
+
+            await markMessageAsRead(business_phone_number_id, message.id);
+            //   } else if (
+            //     message?.type === "interactive" &&
+            //     message?.interactive?.type === "list_reply"
+            //   ) {
+
+            //     await sendMessage(
+            //       business_phone_number_id,
+            //       message.from,
+            //       translatedText,
+            //       message.id
+            //     );
+            //     await sendProductCatalogingPrompt(
+            //       business_phone_number_id,
+            //       message.from
+            //     );
+            //     await markMessageAsRead(business_phone_number_id, message.id);
+          } else if (
+            message?.type === "interactive" &&
+            message?.interactive?.type === "list_reply" &&
+            message?.interactive?.list_reply?.id.startsWith("lang_")
+          ) {
+            selectedLanguageCode = message.interactive.list_reply.id.slice(5);
+            await sendProductCatalogingPrompt(
+              business_phone_number_id,
+              message.from
+            );
+
+            await markMessageAsRead(business_phone_number_id, message.id);
+          } else if (
+            message?.type === "interactive" &&
+            message?.interactive?.type === "button_reply"
+          ) {
+            if (message.interactive.button_reply.id === "yes") {
+              const txt = await textToTextTranslationNMT(
+                "Let's start your product onboarding. What is your shop's name?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else {
+              const txt = await textToTextTranslationNMT(
+                "Okay, let me know if you need anything.",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            }
+            await markMessageAsRead(business_phone_number_id, message.id);
+          } else if (message?.type === "audio" && message.audio?.voice) {
+            const audioId = message.audio.id;
+
+            try {
+              downloadAudio(business_phone_number_id, audioId, message);
+            } catch (error) {
+              console.error("Error in STT processing:", error);
+            }
+          }
+        }
+      }
     }
 
-    await markMessageAsRead(business_phone_number_id, message.id);
-  } else if (
-    message?.type === "interactive" &&
-    message?.interactive?.type === "list_reply"
-  ) {
-    selectedLanguageCode = message.interactive.list_reply.id;
-    const selectedLanguage = Object.keys(languages).find(
-      (lang) => languages[lang] === selectedLanguageCode
-    );
-    const responseText = `You have selected ${selectedLanguage}. The ISO code is ${selectedLanguageCode}.`;
-    const translatedText = await textToTextTranslationNMT(
-      responseText,
-      selectedLanguageCode
-    );
-    await sendMessage(
-      business_phone_number_id,
-      message.from,
-      translatedText,
-      message.id
-    );
-    await sendProductCatalogingPrompt(business_phone_number_id, message.from);
-    await markMessageAsRead(business_phone_number_id, message.id);
-  } else if (
-    message?.type === "interactive" &&
-    message?.interactive?.type === "button_reply"
-  ) {
-    if (message.interactive.button_reply.id === "yes") {
-      const txt = await textToTextTranslationNMT(
-        "Let's start your product onboarding. What is your shop's name?",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
-    } else {
-      const txt = await textToTextTranslationNMT(
-        "Okay, let me know if you need anything.",
-        selectedLanguageCode
-      );
-      await sendMessage(business_phone_number_id, message.from, txt);
-    }
-    await markMessageAsRead(business_phone_number_id, message.id);
-  } else if (message?.type === "audio" && message.audio?.voice) {
-    const audioId = message.audio.id;
-
-    try {
-      downloadAudio(business_phone_number_id, audioId, message);
-
-    } catch (error) {
-      console.error("Error in STT processing:", error);
-    }
+    res.sendStatus(200);
   }
-
-  res.sendStatus(200);
 });
 
 app.get("/webhook", (req, res) => {
@@ -214,6 +261,9 @@ app.listen(PORT, () => {
 });
 
 async function sendWelcomeMessage(business_phone_number_id, message) {
+  const imageUri =
+    "https://vyaparbackend.s3.amazonaws.com/uploads/vyaparLogo2.jpeg";
+  // Sending image
   await axios({
     method: "POST",
     url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
@@ -225,7 +275,7 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
       to: message.from,
       type: "image",
       image: {
-        link: "https://firebasestorage.googleapis.com/v0/b/nagarnigamayodhya-2fb11.appspot.com/o/Banner%203_v1.jpg?alt=media&token=93c5196c-a596-469e-8ab4-607100b09ccb",
+        link: imageUri,
       },
       context: {
         message_id: message.id,
@@ -233,6 +283,7 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
     },
   });
 
+  //   Sending welcome message
   await axios({
     method: "POST",
     url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
@@ -248,16 +299,7 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
     },
   });
 
-  const sections = [
-    {
-      title: "Language Selection",
-      rows: Object.keys(languages).map((lang) => ({
-        id: languages[lang],
-        title: lang.charAt(0).toUpperCase() + lang.slice(1),
-      })),
-    },
-  ];
-
+  //   Sending language selection list
   await axios({
     method: "POST",
     url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
@@ -272,17 +314,22 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
         type: "list",
         header: {
           type: "text",
-          text: "Welcome!",
+          text: "",
         },
         body: {
-          text: "Please select a language from the following:",
+          text: "Please select a language from the following:\n\nकृपया भाषा का चयन करें:",
         },
         footer: {
           text: "Tap to select a language",
         },
         action: {
           button: "Select Language",
-          sections: sections,
+          sections: [
+            {
+              title: "Language Selection",
+              rows: languages,
+            },
+          ],
         },
       },
     },
@@ -380,7 +427,7 @@ const downloadAudio = async (business_phone_number_id, audioId, message) => {
   // Extract the actual audio URL from the metadata
   const audioUrl = response.data.url;
   console.log("Actual audio URL:", audioUrl);
-
+ 
   // Now download the actual audio file
   const oggPath = path.join(__dirname, `${audioId}.ogg`);
   const wavPath = path.join(__dirname, `${audioId}.wav`);
