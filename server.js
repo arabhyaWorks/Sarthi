@@ -85,67 +85,6 @@ app.post("/webhook", async (req, res) => {
             console.log(userName, message.from, userLanguage, messageText);
             if (messageText === "hi") {
               await sendWelcomeMessage(business_phone_number_id, message);
-            } if (!shopName) {
-              shopName = message.text.body;
-              const txt = await textToTextTranslationNMT(
-                "What is your state name?",
-                selectedLanguageCode
-              );
-              await sendMessage(business_phone_number_id, message.from, txt);
-            } else if (!stateName) {
-              stateName = message.text.body;
-              const txt = await textToTextTranslationNMT(
-                "What is your product's language?",
-                selectedLanguageCode
-              );
-              await sendMessage(business_phone_number_id, message.from, txt);
-            } else if (!productLanguage) {
-              productLanguage = message.text.body;
-              const txt = await textToTextTranslationNMT(
-                "What is your product's category?",
-                selectedLanguageCode
-              );
-              await sendMessage(business_phone_number_id, message.from, txt);
-            } else if (!productCategory) {
-              productCategory = message.text.body;
-              const txt = await textToTextTranslationNMT(
-                "What is your product's title?",
-                selectedLanguageCode
-              );
-              await sendMessage(business_phone_number_id, message.from, txt);
-            } else if (!productTitle) {
-              productTitle = message.text.body;
-              const txt = await textToTextTranslationNMT(
-                "What is your product's price?",
-                selectedLanguageCode
-              );
-              await sendMessage(business_phone_number_id, message.from, txt);
-            } else if (!productPrice) {
-              productPrice = message.text.body;
-              const txt = await textToTextTranslationNMT(
-                "What is your product's description?",
-                selectedLanguageCode
-              );
-              await sendMessage(business_phone_number_id, message.from, txt);
-            } else if (!productDescription) {
-              productDescription = message.text.body;
-              const txt = await textToTextTranslationNMT(
-                "Do you have any variations for the product?",
-                selectedLanguageCode
-              );
-              await sendMessage(business_phone_number_id, message.from, txt);
-            } else if (!productVariation) {
-              productVariation = message.text.body;
-              const summaryText = `Thank you! Here is the information you provided:\nShop Name: ${shopName}\nState: ${stateName}\nProduct Language: ${productLanguage}\nProduct Category: ${productCategory}\nProduct Title: ${productTitle}\nProduct Price: ${productPrice}\nProduct Description: ${productDescription}\nProduct Variation: ${productVariation}`;
-              const translatedSummaryText = await textToTextTranslationNMT(
-                summaryText,
-                selectedLanguageCode
-              );
-              await sendMessage(
-                business_phone_number_id,
-                message.from,
-                translatedSummaryText
-              );
             } else {
               const txt = await textToTextTranslationNMT(
                 "Invalid selection. Please send 'hi' to start over.",
