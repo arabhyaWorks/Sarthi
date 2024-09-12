@@ -5,9 +5,6 @@ import dotenv from "dotenv";
 import { textToTextTranslationNMT } from "./bhashini.js";
 import { languages, languageKey } from "./constants.js";
 
-import sendMessage from "./sendMessage.js";
-import sendCapabilties from "./capabilities.js";
-
 import { fileURLToPath } from "url";
 import path from "path";
 
@@ -24,6 +21,10 @@ dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
+
+// const WHATSAPP_TOKEN = process.env.GRAPH_API_TOKEN;
+// const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
+// const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
 const {
   WEBHOOK_VERIFY_TOKEN,
@@ -84,6 +85,130 @@ app.post("/webhook", async (req, res) => {
             console.log(userName, message.from, userLanguage, messageText);
             if (messageText === "hi") {
               await sendWelcomeMessage(business_phone_number_id, message);
+            } else if (messageText === "yes") {
+              const txt = await textToTextTranslationNMT(
+                "Let's start your product onboarding. What is your shop's name?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (messageText === "no") {
+              const txt = await textToTextTranslationNMT(
+                "Okay, let me know if you need anything.",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (shopName === "" && messageText !== "hi") {
+              shopName = messageText; // Store shop name
+              console.log("Shop Name : ", shopName);
+              const txt = await textToTextTranslationNMT(
+                "What is the name of your state?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (stateName === "" && messageText !== "hi") {
+              stateName = messageText; // Store state name
+              console.log("State Name : ", stateName);
+              const txt = await textToTextTranslationNMT(
+                "What is the primary language of your products?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (
+              productLanguage === "" &&
+              messageText !== "hi"
+            ) {
+              productLanguage = messageText; // Store product language
+              console.log("Product Language : ", productLanguage);
+              const txt = await textToTextTranslationNMT(
+                "What is the category of your product?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (
+              productCategory === "" &&
+              messageText !== "hi"
+            ) {
+              productCategory = messageText; // Store product category
+              console.log("Product Category : ", productCategory);
+              const txt = await textToTextTranslationNMT(
+                "What is the title of your product?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (
+              productTitle === "" &&
+              messageText !== "hi"
+            ) {
+              productTitle = messageText; // Store product title
+              console.log("Product Title : ", productTitle);
+              const txt = await textToTextTranslationNMT(
+                "What is the price of your product?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (
+              productPrice === "" &&
+              messageText !== "hi"
+            ) {
+              productPrice = messageText; // Store product price
+              console.log("Product Price : ", productPrice);
+              const txt = await textToTextTranslationNMT(
+                "Please provide a short description of your product.",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (
+              productDescription === "" &&
+              messageText !== "hi"
+            ) {
+              productDescription = messageText; // Store product description
+              console.log("Product Description : ", productDescription);
+              const txt = await textToTextTranslationNMT(
+                "Are there any variations for your product? (eg. Size, Color etc.)",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (
+              productVariation === "" &&
+              messageText !== "hi"
+            ) {
+              productVariation = messageText; // Store product variation
+              console.log("Product Variation : ", productVariation);
+
+              // Store user input for later use
+              userState.shopName = shopName;
+              userState.stateName = stateName;
+              userState.productLanguage = productLanguage;
+              userState.productCategory = productCategory;
+              userState.productTitle = productTitle;
+              userState.productPrice = productPrice;
+              userState.productDescription = productDescription;
+              userState.productVariation = productVariation;
+
+              userStates[
+                req.body.entry?.[0]?.changes[0]?.value?.contacts?.[0]?.id
+              ] = userState;
+
+              const txt = await textToTextTranslationNMT(
+                "Your product details have been saved! Would you like to catalog your product now?",
+                selectedLanguageCode
+              );
+              await sendMessage(business_phone_number_id, message.from, txt);
+
+              // Reset variables for the next product
+              shopName = "";
+              stateName = "";
+              productLanguage = "";
+              productCategory = "";
+              productTitle = "";
+              productPrice = "";
+              productDescription = "";
+              productVariation = "";
+
+              await sendProductCatalogingPrompt(
+                business_phone_number_id,
+                message.from
+              );
             } else {
               const txt = await textToTextTranslationNMT(
                 "Invalid selection. Please send 'hi' to start over.",
@@ -93,16 +218,16 @@ app.post("/webhook", async (req, res) => {
             }
 
             await markMessageAsRead(business_phone_number_id, message.id);
-          }
-
-          // Handle languageSelection
-          else if (
+          } else if (
             message?.type === "interactive" &&
             message?.interactive?.type === "list_reply" &&
             message?.interactive?.list_reply?.id.startsWith("lang_")
           ) {
             selectedLanguageCode = message.interactive.list_reply.id.slice(5);
-            sendCapabilties(business_phone_number_id, message.from);
+            await sendProductCatalogingPrompt(
+              business_phone_number_id,
+              message.from
+            );
 
             await markMessageAsRead(business_phone_number_id, message.id);
           } else if (
@@ -238,6 +363,31 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
   });
 }
 
+async function sendMessage(
+  business_phone_number_id,
+  to,
+  text,
+  contextMessageId = null
+) {
+  const data = {
+    messaging_product: "whatsapp",
+    to: to,
+    text: { body: text },
+  };
+  if (contextMessageId) {
+    data.context = { message_id: contextMessageId };
+  }
+
+  await axios({
+    method: "POST",
+    url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
+    headers: {
+      Authorization: `Bearer ${GRAPH_API_TOKEN}`,
+    },
+    data: data,
+  });
+}
+
 async function sendProductCatalogingPrompt(business_phone_number_id, to) {
   await axios({
     method: "POST",
@@ -304,7 +454,7 @@ const downloadAudio = async (business_phone_number_id, audioId, message) => {
   // Extract the actual audio URL from the metadata
   const audioUrl = response.data.url;
   console.log("Actual audio URL:", audioUrl);
-
+ 
   // Now download the actual audio file
   const oggPath = path.join(__dirname, `${audioId}.ogg`);
   const wavPath = path.join(__dirname, `${audioId}.wav`);
@@ -328,58 +478,4 @@ const downloadAudio = async (business_phone_number_id, audioId, message) => {
     });
 };
 
-const sendCapabilties = async (business_phone_number_id, to) => {
-  const introMessage = `
-    Welcome to Vyapaar Launchpad! 🚀
-
-    Vyapaar Launchpad is your all-in-one solution for managing your business across e-commerce platforms, especially ONDC. We help you:
-
-    - 📋 Easily onboard your store on ONDC and other platforms like Amazon, Flipkart, and Meesho.
-    - 📦 Catalog and manage your products, with options to upload existing store data, provide details through voice/text, or even scan your menu.
-    - 📊 Receive real-time updates on orders, reviews, stock levels, and more, all directly to WhatsApp.
-    - 🔍 Clear any doubts or myths you might have about e-commerce and how ONDC works, so you can make informed decisions.
-
-    Would you like to start your store onboarding process now or ask any questions about Vyapaar Launchpad's capabilities?
-  `;
-
-  // Sending the introductory message first
-  await sendMessage(business_phone_number_id, to, introMessage);
-
-  // Sending the interactive button for onboarding or asking questions
-  await axios({
-    method: "POST",
-    url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
-    headers: {
-      Authorization: `Bearer ${GRAPH_API_TOKEN}`,
-    },
-    data: {
-      messaging_product: "whatsapp",
-      to: to,
-      type: "interactive",
-      interactive: {
-        type: "button",
-        body: {
-          text: "Do you want to start onboarding your store or ask a question?",
-        },
-        action: {
-          buttons: [
-            {
-              type: "reply",
-              reply: {
-                id: "start_onboarding",
-                title: "Start Onboarding",
-              },
-            },
-            {
-              type: "reply",
-              reply: {
-                id: "ask_question",
-                title: "Ask a Question",
-              },
-            },
-          ],
-        },
-      },
-    },
-  });
-};
+export default app;
