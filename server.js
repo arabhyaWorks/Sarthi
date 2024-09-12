@@ -1,12 +1,11 @@
 import express from "express";
 import axios from "axios";
 import bodyParser from "body-parser";
-import dotenv from "dotenv";
 import { textToTextTranslationNMT } from "./bhashini.js";
 import { languages, languageKey } from "./constants.js";
 
 import sendMessage from "./sendMessage.js";
-import sendCapabilties from "./capabilities.js";
+import fetchAnswers from "./fetchAnswers.js";
 
 import { fileURLToPath } from "url";
 import path from "path";
@@ -20,7 +19,6 @@ import downloadFile from "./downloadAudio.js";
 
 const port = process.env.PORT || 3000;
 
-dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
@@ -38,15 +36,16 @@ let userNumber = "";
 
 let selectedLanguageCode = "";
 let userStates = {};
+let serviceState = "";
 
-let shopName = ""; // Global variable to store shop name
-let stateName = ""; // Global variable to store state name
-let productLanguage = ""; // Global variable to store product language
-let productCategory = ""; // Global variable to store product category
-let productTitle = ""; // Global variable to store product title
-let productPrice = ""; // Global variable to store product price
-let productDescription = ""; // Global variable to store product description
-let productVariation = ""; // Global variable to store product variation
+let shopName = "";
+let stateName = "";
+let productLanguage = "";
+let productCategory = "";
+let productTitle = "";
+let productPrice = "";
+let productDescription = "";
+let productVariation = "";
 
 app.post("/webhook", async (req, res) => {
   const body = req.body;
@@ -85,11 +84,19 @@ app.post("/webhook", async (req, res) => {
             if (messageText === "hi") {
               await sendWelcomeMessage(business_phone_number_id, message);
             } else {
-              const txt = await textToTextTranslationNMT(
-                "Invalid selection. Please send 'hi' to start over.",
-                selectedLanguageCode
-              );
-              await sendMessage(business_phone_number_id, message.from, txt);
+              // const txt = await textToTextTranslationNMT(
+              //   "Invalid selection. Please send 'hi' to start over.",
+              //   selectedLanguageCode
+              // );
+              // await sendMessage(business_phone_number_id, message.from, txt);
+              if (serviceState === "ask_question") {
+                const answers = await fetchAnswers(messageText);
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  answers
+                );
+              }
             }
 
             await markMessageAsRead(business_phone_number_id, message.id);
@@ -102,22 +109,30 @@ app.post("/webhook", async (req, res) => {
             message?.interactive?.list_reply?.id.startsWith("lang_")
           ) {
             selectedLanguageCode = message.interactive.list_reply.id.slice(5);
+            // Handle Send Capabilities
             sendCapabilties(business_phone_number_id, message.from);
 
             await markMessageAsRead(business_phone_number_id, message.id);
-          } else if (
+          }
+
+          // Handling all button replies
+          else if (
             message?.type === "interactive" &&
             message?.interactive?.type === "button_reply"
           ) {
-            if (message.interactive.button_reply.id === "yes") {
+            if (message.interactive.button_reply.id === "ask_question") {
+              serviceState = "ask_question";
               const txt = await textToTextTranslationNMT(
-                "Let's start your product onboarding. What is your shop's name?",
+                "Please type your query or send a voice message.",
                 selectedLanguageCode
               );
               await sendMessage(business_phone_number_id, message.from, txt);
-            } else {
+            } else if (
+              message.interactive.button_reply.id === "start_onboarding"
+            ) {
+              serviceState = "start_onboarding";
               const txt = await textToTextTranslationNMT(
-                "Okay, let me know if you need anything.",
+                "Let's onboard your Store. What is your shop's name?",
                 selectedLanguageCode
               );
               await sendMessage(business_phone_number_id, message.from, txt);
@@ -127,7 +142,25 @@ app.post("/webhook", async (req, res) => {
             const audioId = message.audio.id;
 
             try {
-              downloadAudio(business_phone_number_id, audioId, message);
+              // const transcript = await downloadAudio(
+              //   business_phone_number_id,
+              //   audioId,
+              //   message
+              // );
+
+              downloadAudio(business_phone_number_id, audioId, message, serviceState)
+              // .then(
+              //   (transcript) => {
+              //     console.log("Transcript: ", transcript);
+              //     sendMessage(
+              //       business_phone_number_id,
+              //       message.from,
+              //       transcript
+              //     );
+
+
+              //   }
+              // );
             } catch (error) {
               console.error("Error in STT processing:", error);
             }
@@ -292,7 +325,7 @@ async function markMessageAsRead(business_phone_number_id, messageId) {
   });
 }
 
-const downloadAudio = async (business_phone_number_id, audioId, message) => {
+const downloadAudio = async (business_phone_number_id, audioId, message, serviceState) => {
   const url = `https://graph.facebook.com/v16.0/${audioId}`;
   console.log("Fetching audio metadata from:", url);
 
@@ -319,6 +352,16 @@ const downloadAudio = async (business_phone_number_id, audioId, message) => {
         .then((transcribedText) => {
           console.log("Transcription Result:", transcribedText);
           sendMessage(business_phone_number_id, message.from, transcribedText);
+          if (serviceState === "ask_question") {
+            fetchAnswers(transcribedText).then((answers) => {
+              sendMessage(
+                business_phone_number_id,
+                message.from,
+                answers
+              );
+            });
+          }
+          // return transcribedText;
 
           // return transcribedText;
         })
