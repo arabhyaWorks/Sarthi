@@ -37,7 +37,7 @@ const {
 let userName = "";
 let userNumber = "";
 
-let selectedLanguageCode = "en";
+let selectedLanguageCode = "";
 let userStates = {};
 
 let shopName = ""; // Global variable to store shop name
@@ -85,27 +85,7 @@ app.post("/webhook", async (req, res) => {
             console.log(userName, message.from, userLanguage, messageText);
             if (messageText === "hi") {
               await sendWelcomeMessage(business_phone_number_id, message);
-            } else if (languages[messageText]) {
-              selectedLanguageCode = languages[messageText];
-              const selectedLanguage = Object.keys(languages).find(
-                (lang) => languages[lang] === selectedLanguageCode
-              );
-              const responseText = `You have selected ${selectedLanguage}. The ISO code is ${selectedLanguageCode}.`;
-              const translatedText = await textToTextTranslationNMT(
-                responseText,
-                selectedLanguageCode
-              );
-              await sendMessage(
-                business_phone_number_id,
-                message.from,
-                translatedText,
-                message.id
-              );
-              await sendProductCatalogingPrompt(
-                business_phone_number_id,
-                message.from
-              );
-            } else if (!shopName) {
+            } if (!shopName) {
               shopName = message.text.body;
               const txt = await textToTextTranslationNMT(
                 "What is your state name?",
@@ -175,22 +155,6 @@ app.post("/webhook", async (req, res) => {
             }
 
             await markMessageAsRead(business_phone_number_id, message.id);
-            //   } else if (
-            //     message?.type === "interactive" &&
-            //     message?.interactive?.type === "list_reply"
-            //   ) {
-
-            //     await sendMessage(
-            //       business_phone_number_id,
-            //       message.from,
-            //       translatedText,
-            //       message.id
-            //     );
-            //     await sendProductCatalogingPrompt(
-            //       business_phone_number_id,
-            //       message.from
-            //     );
-            //     await markMessageAsRead(business_phone_number_id, message.id);
           } else if (
             message?.type === "interactive" &&
             message?.interactive?.type === "list_reply" &&
