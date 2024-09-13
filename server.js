@@ -19,7 +19,6 @@ import downloadFile from "./downloadAudio.js";
 
 const port = process.env.PORT || 3000;
 
-
 const app = express();
 app.use(bodyParser.json());
 
@@ -142,25 +141,12 @@ app.post("/webhook", async (req, res) => {
             const audioId = message.audio.id;
 
             try {
-              // const transcript = await downloadAudio(
-              //   business_phone_number_id,
-              //   audioId,
-              //   message
-              // );
-
-              downloadAudio(business_phone_number_id, audioId, message, serviceState)
-              // .then(
-              //   (transcript) => {
-              //     console.log("Transcript: ", transcript);
-              //     sendMessage(
-              //       business_phone_number_id,
-              //       message.from,
-              //       transcript
-              //     );
-
-
-              //   }
-              // );
+              downloadAudio(
+                business_phone_number_id,
+                audioId,
+                message,
+                serviceState
+              );
             } catch (error) {
               console.error("Error in STT processing:", error);
             }
@@ -325,7 +311,12 @@ async function markMessageAsRead(business_phone_number_id, messageId) {
   });
 }
 
-const downloadAudio = async (business_phone_number_id, audioId, message, serviceState) => {
+const downloadAudio = async (
+  business_phone_number_id,
+  audioId,
+  message,
+  serviceState
+) => {
   const url = `https://graph.facebook.com/v16.0/${audioId}`;
   console.log("Fetching audio metadata from:", url);
 
@@ -354,11 +345,7 @@ const downloadAudio = async (business_phone_number_id, audioId, message, service
           sendMessage(business_phone_number_id, message.from, transcribedText);
           if (serviceState === "ask_question") {
             fetchAnswers(transcribedText).then((answers) => {
-              sendMessage(
-                business_phone_number_id,
-                message.from,
-                answers
-              );
+              sendMessage(business_phone_number_id, message.from, answers);
             });
           }
           // return transcribedText;
