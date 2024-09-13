@@ -3,12 +3,51 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import ffmpeg from "fluent-ffmpeg";
+import FormData from 'form-data';
+
+const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
 
 // Text To Speech, WAV to OGG conversion
 
 // Fix __filename and __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const getAudioId = async (location) => {
+  try {
+    // Create a FormData instance
+    const formData = new FormData();
+    
+    // Specify the path to the OGG file
+    const audioFilePath = path.join(__dirname, `./storage/${location}.ogg`);
+    
+    // Append the audio file and other required form data fields
+    formData.append('file', fs.createReadStream(audioFilePath)); // Read file
+    formData.append('type', 'audio/ogg');
+    formData.append('messaging_product', 'whatsapp');
+    
+    // Make the API request
+    const response = await axios.post(
+      'https://graph.facebook.com/v20.0/366490143206901/media',
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer EAALqsiz91T0BOZBuDte6gjd7Gtw3CjEhGiucEKSVUaZBzQPb9GWJWV6yRnpN7pCxSGn5LuYr8XyKYUfH5PBVUQoYP1GI0dqCtAmoqssZCDUZBCKk8MNehQ3ngWnp74fUQdm0LiJjpJADNdCXT7gi3iXEEZBQnTYND0frjlIOxFqkfzyfVyqmMoXacqHr7MALjyHFJZBJZBCWNEdVpTzIRWuhaaa72MZD`,
+          ...formData.getHeaders(),
+        },
+      }
+    );
+    
+    // Extract and return the media ID (audio ID)
+    const audioId = response.data.id;
+    console.log(`Audio ID: ${audioId}`);
+    return audioId;
+  } catch (error) {
+    console.error('Error uploading audio:', error.message);
+    throw error;
+  }
+};
+
 
 // Fetch audio from TTS service
 const fetchAudio = async (text) => {
@@ -95,7 +134,11 @@ const convertWavToOgg = (input, output) => {
 };
 
 // Example usage
-downloadAudio(
-  "Hi this Vyapar Sathi, we help sellers to go digital by onboarding their store through Vyapar launchpad",
-  "whatsappAudio"
-);
+// downloadAudio(
+//   "Hi this Vyapar Sathi, we help sellers to go digital by onboarding their store through Vyapar launchpad",
+//   "whatsappAudio"
+// );
+
+
+
+getAudioId("whatsappAudio");
