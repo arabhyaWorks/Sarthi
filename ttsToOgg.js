@@ -4,8 +4,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 import ffmpeg from "fluent-ffmpeg";
 import FormData from 'form-data';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
+console.log(GRAPH_API_TOKEN);
 
 // Text To Speech, WAV to OGG conversion
 
@@ -13,7 +17,36 @@ const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const getAudioId = async (location) => {
+
+const sendAudio = async (audioId, to) => {
+  try {
+    // Make the API request to send the audio message
+    const response = await axios.post(
+      "https://graph.facebook.com/v20.0/366490143206901/messages",
+      {
+        messaging_product: "whatsapp",
+        to: to,  // The recipient's WhatsApp number
+        type: "audio",
+        audio: {
+          id: audioId,  // The audio ID you received from the previous media upload
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${GRAPH_API_TOKEN}`,  // Your Bearer token
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Audio sent to WhatsApp:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error sending audio to WhatsApp:", error.message);
+    throw error;
+  }
+};
+const getAudioId = async (location, sendToNumber) => {
   try {
     // Create a FormData instance
     const formData = new FormData();
@@ -32,7 +65,8 @@ const getAudioId = async (location) => {
       formData,
       {
         headers: {
-          Authorization: `Bearer EAALqsiz91T0BOZBuDte6gjd7Gtw3CjEhGiucEKSVUaZBzQPb9GWJWV6yRnpN7pCxSGn5LuYr8XyKYUfH5PBVUQoYP1GI0dqCtAmoqssZCDUZBCKk8MNehQ3ngWnp74fUQdm0LiJjpJADNdCXT7gi3iXEEZBQnTYND0frjlIOxFqkfzyfVyqmMoXacqHr7MALjyHFJZBJZBCWNEdVpTzIRWuhaaa72MZD`,
+          Authorization: `Bearer ${GRAPH_API_TOKEN}`,
+          // Authorization: `Bearer EAALqsiz91T0BOZBuDte6gjd7Gtw3CjEhGiucEKSVUaZBzQPb9GWJWV6yRnpN7pCxSGn5LuYr8XyKYUfH5PBVUQoYP1GI0dqCtAmoqssZCDUZBCKk8MNehQ3ngWnp74fUQdm0LiJjpJADNdCXT7gi3iXEEZBQnTYND0frjlIOxFqkfzyfVyqmMoXacqHr7MALjyHFJZBJZBCWNEdVpTzIRWuhaaa72MZD`,
           ...formData.getHeaders(),
         },
       }
@@ -41,6 +75,7 @@ const getAudioId = async (location) => {
     // Extract and return the media ID (audio ID)
     const audioId = response.data.id;
     console.log(`Audio ID: ${audioId}`);
+    sendAudio(audioId,sendToNumber);
     return audioId;
   } catch (error) {
     console.error('Error uploading audio:', error.message);
@@ -141,4 +176,4 @@ const convertWavToOgg = (input, output) => {
 
 
 
-getAudioId("whatsappAudio");
+getAudioId("whatsappAudio", "+919452624111");
