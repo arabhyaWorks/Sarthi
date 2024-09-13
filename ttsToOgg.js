@@ -3,13 +3,18 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import ffmpeg from "fluent-ffmpeg";
-import FormData from 'form-data';
-import dotenv from 'dotenv';
+import FormData from "form-data";
+import dotenv from "dotenv";
 
 dotenv.config();
 
+let sendToNumber = "+919452624111";
+
 const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
-console.log(GRAPH_API_TOKEN);
+// console.log(GRAPH_API_TOKEN);
+
+const textString =
+  "Vyapar Launchpad is an innovative platform designed to assist small and medium-sized businesses in seamlessly entering and managing their presence across multiple e-commerce platforms, particularly focusing on the ONDC (Open Network for Digital Commerce) ecosystem. It simplifies the onboarding process for sellers, enabling them to set up their online stores with minimal effort through a user-friendly interface.";
 
 // Text To Speech, WAV to OGG conversion
 
@@ -17,23 +22,22 @@ console.log(GRAPH_API_TOKEN);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
-const sendAudio = async (audioId, to) => {
+const sendAudio = async (audioId) => {
   try {
     // Make the API request to send the audio message
     const response = await axios.post(
       "https://graph.facebook.com/v20.0/366490143206901/messages",
       {
         messaging_product: "whatsapp",
-        to: to,  // The recipient's WhatsApp number
+        to: sendToNumber, // The recipient's WhatsApp number
         type: "audio",
         audio: {
-          id: audioId,  // The audio ID you received from the previous media upload
+          id: audioId, // The audio ID you received from the previous media upload
         },
       },
       {
         headers: {
-          Authorization: `Bearer ${GRAPH_API_TOKEN}`,  // Your Bearer token
+          Authorization: `Bearer ${GRAPH_API_TOKEN}`, // Your Bearer token
           "Content-Type": "application/json",
         },
       }
@@ -46,22 +50,22 @@ const sendAudio = async (audioId, to) => {
     throw error;
   }
 };
-const getAudioId = async (location, sendToNumber) => {
+const getAudioId = async (location) => {
   try {
     // Create a FormData instance
     const formData = new FormData();
-    
+
     // Specify the path to the OGG file
     const audioFilePath = path.join(__dirname, `./storage/${location}.ogg`);
-    
+
     // Append the audio file and other required form data fields
-    formData.append('file', fs.createReadStream(audioFilePath)); // Read file
-    formData.append('type', 'audio/ogg');
-    formData.append('messaging_product', 'whatsapp');
-    
+    formData.append("file", fs.createReadStream(audioFilePath)); // Read file
+    formData.append("type", "audio/ogg");
+    formData.append("messaging_product", "whatsapp");
+
     // Make the API request
     const response = await axios.post(
-      'https://graph.facebook.com/v20.0/366490143206901/media',
+      "https://graph.facebook.com/v20.0/366490143206901/media",
       formData,
       {
         headers: {
@@ -71,18 +75,17 @@ const getAudioId = async (location, sendToNumber) => {
         },
       }
     );
-    
+
     // Extract and return the media ID (audio ID)
     const audioId = response.data.id;
     console.log(`Audio ID: ${audioId}`);
-    sendAudio(audioId,sendToNumber);
+    sendAudio(audioId);
     return audioId;
   } catch (error) {
-    console.error('Error uploading audio:', error.message);
+    console.error("Error uploading audio:", error.message);
     throw error;
   }
 };
-
 
 // Fetch audio from TTS service
 const fetchAudio = async (text) => {
@@ -159,6 +162,7 @@ const convertWavToOgg = (input, output) => {
       .on("end", () => {
         console.log(`Conversion to OGG completed: ${outputOgg}`);
         resolve(outputOgg);
+        getAudioId(output);
       })
       .on("error", (err) => {
         console.error("Error during WAV to OGG conversion:", err.message);
@@ -169,11 +173,4 @@ const convertWavToOgg = (input, output) => {
 };
 
 // Example usage
-// downloadAudio(
-//   "Hi this Vyapar Sathi, we help sellers to go digital by onboarding their store through Vyapar launchpad",
-//   "whatsappAudio"
-// );
-
-
-
-getAudioId("whatsappAudio", "+919452624111");
+downloadAudio(textString, "things");
