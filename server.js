@@ -16,6 +16,7 @@ const __dirname = path.dirname(__filename);
 import SpeechToText from "./stt.js";
 import convertOggToWav from "./ogg2wav.js";
 import downloadFile from "./downloadAudio.js";
+import textToSpeech from "./ttsToOgg.js";
 
 const port = process.env.PORT || 3000;
 
@@ -48,6 +49,7 @@ let productVariation = "";
 
 app.post("/webhook", async (req, res) => {
   const body = req.body;
+  console.log(body.entry[0].changes);
 
   if (body.object === "whatsapp_business_account") {
     const business_phone_number_id =
@@ -141,12 +143,29 @@ app.post("/webhook", async (req, res) => {
             const audioId = message.audio.id;
 
             try {
+              // const transcript = await downloadAudio(
+              //   business_phone_number_id,
+              //   audioId,
+              //   message
+              // );
+
               downloadAudio(
                 business_phone_number_id,
                 audioId,
                 message,
                 serviceState
               );
+              // .then(
+              //   (transcript) => {
+              //     console.log("Transcript: ", transcript);
+              //     sendMessage(
+              //       business_phone_number_id,
+              //       message.from,
+              //       transcript
+              //     );
+
+              //   }
+              // );
             } catch (error) {
               console.error("Error in STT processing:", error);
             }
@@ -183,7 +202,7 @@ app.listen(PORT, () => {
 
 async function sendWelcomeMessage(business_phone_number_id, message) {
   const imageUri =
-    "https://vyaparbackend.s3.amazonaws.com/uploads/vyaparLogo2.jpeg";
+    "https://raw.githubusercontent.com/arabhyaWorks/Sarthi/main/vyaparLogo3-min.png?token=GHSAT0AAAAAACVW3TC2ZQJV7PWFNKX3AENWZXD6LZA";
   // Sending image
   await axios({
     method: "POST",
@@ -196,7 +215,9 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
       to: message.from,
       type: "image",
       image: {
-        link: imageUri,
+        link: "https://mbagdtopics.com/wp-content/uploads/2024/01/ONDC-2-1.png",
+        caption:
+          "Welcome to Vyapaar Launchpad! Vyapaar Launchpad is your one-stop platform for e-commerce solutions. Let's list your product on ONDC",
       },
       context: {
         message_id: message.id,
@@ -205,20 +226,20 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
   });
 
   //   Sending welcome message
-  await axios({
-    method: "POST",
-    url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
-    headers: {
-      Authorization: `Bearer ${GRAPH_API_TOKEN}`,
-    },
-    data: {
-      messaging_product: "whatsapp",
-      to: message.from,
-      text: {
-        body: "Welcome to Vyapaar Launchpad! Vyapaar Launchpad is your one-stop platform for e-commerce solutions. Let's list your product on ONDC",
-      },
-    },
-  });
+  // await axios({
+  //   method: "POST",
+  //   url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
+  //   headers: {
+  //     Authorization: `Bearer ${GRAPH_API_TOKEN}`,
+  //   },
+  //   data: {
+  //     messaging_product: "whatsapp",
+  //     to: message.from,
+  //     text: {
+  //       body: "Welcome to Vyapaar Launchpad! Vyapaar Launchpad is your one-stop platform for e-commerce solutions. Let's list your product on ONDC",
+  //     },
+  //   },
+  // });
 
   //   Sending language selection list
   await axios({
@@ -345,6 +366,7 @@ const downloadAudio = async (
           sendMessage(business_phone_number_id, message.from, transcribedText);
           if (serviceState === "ask_question") {
             fetchAnswers(transcribedText).then((answers) => {
+              textToSpeech(answers, message.from);
               sendMessage(business_phone_number_id, message.from, answers);
             });
           }

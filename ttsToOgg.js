@@ -22,14 +22,14 @@ const textString =
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const sendAudio = async (audioId) => {
+const sendAudio = async (audioId, messageFrom) => {
   try {
     // Make the API request to send the audio message
     const response = await axios.post(
       "https://graph.facebook.com/v20.0/366490143206901/messages",
       {
         messaging_product: "whatsapp",
-        to: sendToNumber, // The recipient's WhatsApp number
+        to: messageFrom, // The recipient's WhatsApp number
         type: "audio",
         audio: {
           id: audioId, // The audio ID you received from the previous media upload
@@ -50,13 +50,13 @@ const sendAudio = async (audioId) => {
     throw error;
   }
 };
-const getAudioId = async (location) => {
+const getAudioId = async (location, messageFrom) => {
   try {
     // Create a FormData instance
     const formData = new FormData();
 
     // Specify the path to the OGG file
-    const audioFilePath = path.join(__dirname, `./storage/${location}.ogg`);
+    const audioFilePath = path.join(__dirname, `${location}.ogg`);
 
     // Append the audio file and other required form data fields
     formData.append("file", fs.createReadStream(audioFilePath)); // Read file
@@ -79,7 +79,7 @@ const getAudioId = async (location) => {
     // Extract and return the media ID (audio ID)
     const audioId = response.data.id;
     console.log(`Audio ID: ${audioId}`);
-    sendAudio(audioId);
+    sendAudio(audioId, messageFrom);
     return audioId;
   } catch (error) {
     console.error("Error uploading audio:", error.message);
@@ -130,7 +130,8 @@ const fetchAudio = async (text) => {
 };
 
 // Download audio as a WAV file
-const downloadAudio = async (text, filename) => {
+const textToSpeech = async (text, messageFrom) => {
+  const filename = "audios";
   const audioSrc = await fetchAudio(text);
   if (!audioSrc) {
     console.error("No audio content found in the response");
@@ -139,21 +140,21 @@ const downloadAudio = async (text, filename) => {
 
   // Convert base64 to buffer
   const audioBuffer = Buffer.from(audioSrc.split(",")[1], "base64");
-  const filePath = path.join(__dirname, `storage/${filename}.wav`);
+  const filePath = path.join(__dirname, `${filename}.wav`);
 
   // Write WAV file
   fs.writeFileSync(filePath, audioBuffer);
   console.log(`Audio saved to ${filePath}`);
 
   // Convert WAV to OGG
-  await convertWavToOgg(filename, filename); // Use the same name for input/output
+  await convertWavToOgg(filename, filename, messageFrom); // Use the same name for input/output
   console.log("Conversion successful!");
 };
 
 // Function to convert WAV to OGG
-const convertWavToOgg = (input, output) => {
-  const inputWav = path.join(__dirname, `storage/${input}.wav`);
-  const outputOgg = path.join(__dirname, `storage/${output}.ogg`);
+const convertWavToOgg = (input, output, messageFrom) => {
+  const inputWav = path.join(__dirname, `${input}.wav`);
+  const outputOgg = path.join(__dirname, `${output}.ogg`);
 
   return new Promise((resolve, reject) => {
     ffmpeg(inputWav)
@@ -162,7 +163,7 @@ const convertWavToOgg = (input, output) => {
       .on("end", () => {
         console.log(`Conversion to OGG completed: ${outputOgg}`);
         resolve(outputOgg);
-        getAudioId(output);
+        getAudioId(output, messageFrom);
       })
       .on("error", (err) => {
         console.error("Error during WAV to OGG conversion:", err.message);
@@ -173,4 +174,5 @@ const convertWavToOgg = (input, output) => {
 };
 
 // Example usage
-downloadAudio(textString, "things");
+// textToSpeech(textString,);
+export default textToSpeech;

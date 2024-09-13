@@ -16,6 +16,7 @@ const fetchAnswers = async (query) => {
     });
 
     console.log('Response:', response.data);
+    
     return response.data; // The answer from Abhipray
   } catch (error) {
     console.error('Error in fetching response from API:', error);
