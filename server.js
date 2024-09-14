@@ -62,7 +62,10 @@ app.post("/webhook", async (req, res) => {
 
   if (body.object === "whatsapp_business_account") {
     // console.log(body.entry[0][0].value)
-    // console.dir(body, { depth: null, colors: true });
+    // console.dir(body.entry[0].changes[0].value.messages, {
+    //   depth: null,
+    //   colors: true,
+    // });
     // changes: [ { value: [Object], field: 'messages' } ]
     const business_phone_number_id =
       req.body.entry?.[0].changes?.[0].value?.metadata?.phone_number_id;
@@ -155,6 +158,23 @@ app.post("/webhook", async (req, res) => {
                   message.from
                 );
               }
+
+              // Step 2 - Shop Address
+              else if (serviceState === "shop_address") {
+                storeData.storeDetail.address = messageText;
+                console.dir(storeData.storeDetail);
+                serviceState = "shop_photos";
+
+                const shopPhotosText = await textToTextTranslationNMT(
+                  "Please upload your shop photos via the attachment button.",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  shopPhotosText
+                );
+              }
             }
           }
 
@@ -171,7 +191,6 @@ app.post("/webhook", async (req, res) => {
 
             // await markMessageAsRead(business_phone_number_id, message.id);
           }
-          
 
           // handle shop category selection
           else if (
@@ -179,7 +198,7 @@ app.post("/webhook", async (req, res) => {
             message?.interactive?.type === "list_reply" &&
             message?.interactive?.list_reply?.id.startsWith("cat_")
           ) {
-            productCategory = message.interactive.list_reply.id.slice(4);
+            storeData.storeDetail.category = message.interactive.list_reply.id.slice(4);
             console.log("Selected Category: ", productCategory);
             serviceState = "geo_location";
             const enterTitleText = await textToTextTranslationNMT(
@@ -314,11 +333,13 @@ app.post("/webhook", async (req, res) => {
             } catch (error) {
               console.error("Error in STT processing:", error.message);
             }
-          } else if (message?.type === "location") {
+          }
 
+          // Handling image uploads
+          else if (message?.type === "location") {
             // handle geolocation
             if (serviceState === "geo_location") {
-              storeData.geolocation = message.location;
+              storeData.storeDetail.geolocation = message.location;
               console.log("Location:", message.location);
               serviceState = "shop_address";
               const enterAddressText = await textToTextTranslationNMT(
@@ -329,6 +350,36 @@ app.post("/webhook", async (req, res) => {
                 business_phone_number_id,
                 message.from,
                 enterAddressText
+              );
+            }
+          }
+
+          // Handling image uploads
+          else if (message?.type === "image") {
+            if (serviceState === "shop_photos") {
+              storeData.storeDetail.storePhotots = (message.image)
+              // console.log("Shop Photos:", storeData.storePhotots);
+              console.dir(storeData.storeDetail, { depth: null, colors: true });
+              serviceState = "seller_name";
+              const congratsText = await textToTextTranslationNMT(
+                "Congratulations! Step-1 of store onboarding is complete, your shop details have been successfully saved.",
+                selectedLanguageCode
+              );
+              const enterSellerNameText = await textToTextTranslationNMT(
+                "Please enter seller name as per Aadhar card:",
+                selectedLanguageCode
+              );
+
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                congratsText
+              );
+
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                enterSellerNameText
               );
             }
           }

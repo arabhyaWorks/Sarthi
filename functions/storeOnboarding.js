@@ -1,4 +1,4 @@
-const storeData = {
+let storeData = {
   storeDetail: {
     shopName: "",
     category: [
@@ -43,10 +43,8 @@ const storeData = {
         title: "Others",
       },
     ],
-    geolocation: {},
-    state: "",
+    geolocation: null,
     address: "",
-    pincode: "",
     storePhotots: [],
   },
   sellerDetail: {
