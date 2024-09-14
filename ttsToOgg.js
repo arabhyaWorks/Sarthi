@@ -5,6 +5,8 @@ import { fileURLToPath } from "url";
 import ffmpeg from "fluent-ffmpeg";
 import FormData from "form-data";
 import dotenv from "dotenv";
+import goBack from "./functions/goBack.js";
+
 
 dotenv.config();
 
@@ -43,6 +45,8 @@ const sendAudio = async (audioId, messageFrom) => {
       }
     );
 
+    goBack(messageFrom);
+  
     console.log("Audio sent to WhatsApp:", response.data);
     return response.data;
   } catch (error) {

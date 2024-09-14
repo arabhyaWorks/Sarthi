@@ -15,7 +15,7 @@ const fetchAnswers = async (query) => {
       }
     });
 
-    console.log('Response:', response.data);
+    // console.log('Response:', response.data);
     
     return response.data; // The answer from Abhipray
   } catch (error) {

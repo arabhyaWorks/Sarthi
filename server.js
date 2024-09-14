@@ -5,7 +5,6 @@ import { textToTextTranslationNMT } from "./bhashini.js";
 import { languages, languageKey } from "./constants.js";
 import dotenv from "dotenv";
 dotenv.config();
-
 // // console.dir(object, { depth: null, colors: true });
 
 import sendMessage from "./sendMessage.js";
@@ -22,6 +21,7 @@ import convertOggToWav from "./ogg2wav.js";
 import downloadFile from "./downloadAudio.js";
 import textToSpeech from "./ttsToOgg.js";
 
+import sendInteractiveButton from "./functions/interactiveButton.js";
 
 const PORT = process.env.PORT || 3000;
 
@@ -53,7 +53,6 @@ let productVariation = "";
 
 app.post("/webhook", async (req, res) => {
   const body = req.body;
-  console.dir(body.entry[0].changes);
 
   if (body.object === "whatsapp_business_account") {
     const business_phone_number_id =
@@ -83,7 +82,8 @@ app.post("/webhook", async (req, res) => {
 
           if (message?.type === "text") {
             const messageText = message.text.body.toLowerCase();
-            console.log(userName, message.from, userLanguage, messageText);
+            // console.log(userName, message.from, userLanguage, messageText);
+            console.log("Message Text:", messageText);
             if (messageText === "hi") {
               await sendWelcomeMessage(business_phone_number_id, message);
             } else {
@@ -142,6 +142,22 @@ app.post("/webhook", async (req, res) => {
                 selectedLanguageCode
               );
               await sendMessage(business_phone_number_id, message.from, txt);
+            } else if (message.interactive.button_reply.id === "main_menu") {
+              serviceState = "";
+              let txt =
+                "Do you want to start onboarding your store or ask a question?";
+              let buttons = [
+                {
+                  id: "start_onboarding",
+                  title: "Start Onboarding",
+                },
+                {
+                  id: "ask_question",
+                  title: "Ask a Question",
+                },
+              ];
+
+              sendInteractiveButton(txt, buttons, message.from);
             }
             await markMessageAsRead(business_phone_number_id, message.id);
           } else if (message?.type === "audio" && message.audio?.voice) {
