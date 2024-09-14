@@ -441,11 +441,31 @@ app.post("/webhook", async (req, res) => {
                 "hi"
               );
 
-              await sendImageWithCaption(
+              const sendImage = await sendImageWithCaption(
                 "https://ingenuityai.io/vyaparLaunchpad/AjayQR.png",
                 congrats,
                 message.from
               );
+
+              if (sendImage) {
+                const proButtons = [
+                  {
+                    id: "str_listing",
+                    title: "Start Listing",
+                  },
+                  {
+                    id: "ask_question",
+                    title: "Ask a Question",
+                  },
+                ];
+
+                const procatalog = await textToTextTranslationNMT(
+                  "You can also manage your product catalog directly through WhatsApp. Would you like to do it now or later? Feel free to update your catalog at any time on any platform—WhatsApp, the app, or the website—based on your convenience. Additionally, if you have any questions or need help with day-to-day operations, we’re here to assist!",
+                  selectedLanguageCode
+                );
+
+                sendInteractiveButton(procatalog, proButtons, message.from);
+              }
             } else if (message.interactive.button_reply.id === "main_menu") {
               serviceState = "";
               let txt =
