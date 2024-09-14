@@ -66,3 +66,30 @@ let storeData = {
 };
 
 export default storeData;
+
+
+// let storeData = {
+//   storeDetail: {
+//     shopName: "Manjhati shoop",
+//     category: "Khanjathi Categoru",
+//     geolocation: null,
+//     address: "Bela",
+//     storePhotots: [],
+//   },
+//   sellerDetail: {
+//     sellerName: "Moongeri",
+//     aadharNumber: "232131",
+//     panNumber: "32131",
+//     gstNumber: "312312",
+//     aadharImage: null,
+//     panImage: null,
+//     gstImage: null,
+//   },
+//   bankDetails: {
+//     accountHolderName: "Moongeri",
+//     accountNumber: "e23e32",
+//     bankName: "Bela grammin bank",
+//     ifscCode: "231231",
+//     cancelledCheque: "",
+//   },
+// };

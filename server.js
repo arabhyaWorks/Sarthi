@@ -431,6 +431,21 @@ app.post("/webhook", async (req, res) => {
               }
 
               // console.log("Image Sent:", imageSent);
+            } else if (message.interactive.button_reply.id === "con_store") {
+              // const congrats = textToTextTranslationNMT(
+              //   "Congratulations! Your store is now being listed on the ONDC platform. The verification process may take up to 48 hours, after which your store will go live.",
+              //   selectedLanguageCode
+              // );
+              const congrats = await textToTextTranslationNMT(
+                "Congratulations! Your store is now live on the ONDC platform. You can view it through the Vyapar Launchpad Seller app, website, or by following this link [https://vyaparfrontend.vercel.app/Ajay-store]. To promote your store, you can also share your ONDC store QR code, which is provided below.",
+                "hi"
+              );
+
+              await sendImageWithCaption(
+                "https://ingenuityai.io/vyaparLaunchpad/AjayQR.png",
+                congrats,
+                message.from
+              );
             } else if (message.interactive.button_reply.id === "main_menu") {
               serviceState = "";
               let txt =
@@ -606,10 +621,38 @@ app.post("/webhook", async (req, res) => {
                 selectedLanguageCode
               );
 
+              const title = await textToTextTranslationNMT(
+                "Please confirm the details provided by you, are given below:",
+                "en"
+              );
+
+              const confirmText = `${title}\n\n*1. STORE DETAILS*\na. Shop Name: ${storeData.storeDetail.shopName}\nb. Shop Category: ${storeData.storeDetail.category}\nc. Address : ${storeData.storeDetail.address}\n\n*2. SELLER DETAILS*\na. Seller name : ${storeData.sellerDetail.sellerName}\nb. Aadhar number : ${storeData.sellerDetail.aadharNumber}\nc. Pan Number : ${storeData.sellerDetail.panNumber}\nd. GST number : ${storeData.sellerDetail.gstNumber}\n\n*3. BANK DETAILS*\na. Bank holder name : ${storeData.bankDetails.accountHolderName}\nb. Bank account number : ${storeData.bankDetails.accountNumber}\nc. Bank Name : ${storeData.bankDetails.bankName}\nd. IFSC code : ${storeData.bankDetails.ifscCode}`;
+
               await sendMessage(
                 business_phone_number_id,
                 message.from,
                 congratsText
+              );
+
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                confirmText
+              );
+
+              sendInteractiveButton(
+                "If the details are correct, please confirm. If you want to edit, please select edit.",
+                [
+                  {
+                    id: "con_store",
+                    title: "Confirm",
+                  },
+                  {
+                    id: "con_edit",
+                    title: "Edit",
+                  },
+                ],
+                message.from
               );
             }
           }
