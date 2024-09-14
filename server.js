@@ -159,7 +159,7 @@ app.post("/webhook", async (req, res) => {
                 );
               }
 
-              // Step 2 - Shop Address
+              // Step 1 - Shop Address
               else if (serviceState === "shop_address") {
                 storeData.storeDetail.address = messageText;
                 console.dir(storeData.storeDetail);
@@ -173,6 +173,79 @@ app.post("/webhook", async (req, res) => {
                   business_phone_number_id,
                   message.from,
                   shopPhotosText
+                );
+              }
+
+              // step 2 - Seller Name
+              else if (serviceState === "seller_name") {
+                storeData.sellerDetail.sellerName = messageText;
+                console.log("Seller Name:", messageText);
+                serviceState = "seller_aadhar_number";
+
+                const enterAadhar = await textToTextTranslationNMT(
+                  "Please enter your Aadhar number:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterAadhar
+                );
+              }
+
+              // step 2 - Seller Aadhar Number
+              else if (serviceState === "seller_aadhar_number") {
+                storeData.sellerDetail.aadharNumber = messageText;
+                // console.dir(storeData.sellerDetail.aadharNumber);
+                console.log("Aadhar Number:", messageText);
+
+                serviceState = "seller_pan_number";
+
+                const enterPan = await textToTextTranslationNMT(
+                  "Please enter your PAN card number:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterPan
+                );
+              }
+
+              // step 2 - Seller PAN Number
+              else if (serviceState === "seller_pan_number") {
+                storeData.sellerDetail.panNumber = messageText;
+                // console.dir(storeData.sellerDetail.panNumber);
+                console.log("Pan:", messageText);
+
+                serviceState = "seller_gst_number";
+
+                const enterGST = await textToTextTranslationNMT(
+                  "Please enter your shop's GST number:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterGST
+                );
+              }
+
+              // step 2 - Seller GST Number
+              else if (serviceState === "seller_gst_number") {
+                storeData.sellerDetail.gstNumber = messageText;
+                console.log("gst:", messageText);
+
+                serviceState = "seller_aadhar_image";
+
+                const uploadAadhar = await textToTextTranslationNMT(
+                  "Please upload your Aadhar card image via the attachment button.",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  uploadAadhar
                 );
               }
             }
@@ -198,7 +271,8 @@ app.post("/webhook", async (req, res) => {
             message?.interactive?.type === "list_reply" &&
             message?.interactive?.list_reply?.id.startsWith("cat_")
           ) {
-            storeData.storeDetail.category = message.interactive.list_reply.id.slice(4);
+            storeData.storeDetail.category =
+              message.interactive.list_reply.id.slice(4);
             console.log("Selected Category: ", productCategory);
             serviceState = "geo_location";
             const enterTitleText = await textToTextTranslationNMT(
@@ -357,7 +431,7 @@ app.post("/webhook", async (req, res) => {
           // Handling image uploads
           else if (message?.type === "image") {
             if (serviceState === "shop_photos") {
-              storeData.storeDetail.storePhotots = (message.image)
+              storeData.storeDetail.storePhotots = message.image;
               // console.log("Shop Photos:", storeData.storePhotots);
               console.dir(storeData.storeDetail, { depth: null, colors: true });
               serviceState = "seller_name";
@@ -380,6 +454,71 @@ app.post("/webhook", async (req, res) => {
                 business_phone_number_id,
                 message.from,
                 enterSellerNameText
+              );
+            }
+
+            // step 2 - Seller Aadhar Image
+            else if (serviceState === "seller_aadhar_image") {
+              storeData.sellerDetail.aadharImage = message.image;
+              // console.dir(storeData.sellerDetail.aadharImage);
+              console.log("Aadhar image:", message.image);
+
+              serviceState = "seller_pan_image";
+
+              const uploadPan = await textToTextTranslationNMT(
+                "Please upload your PAN card image via the attachment button.",
+                selectedLanguageCode
+              );
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                uploadPan
+              );
+            }
+
+            // step 2 - Seller PAN Image
+            else if (serviceState === "seller_pan_image") {
+              storeData.sellerDetail.panImage = message.image;
+              // console.dir(storeData.sellerDetail.panImage);
+              console.log("pan image:", message.image);
+              serviceState = "seller_gst_image";
+
+              const uploadGST = await textToTextTranslationNMT(
+                "Please upload your GST certificate via the attachment button.",
+                selectedLanguageCode
+              );
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                uploadGST
+              );
+            }
+
+            // step 2 - Seller GST Image
+            else if (serviceState === "seller_gst_image") {
+              storeData.sellerDetail.gstImage = message.image;
+              // console.dir(storeData.sellerDetail.gstImage);
+              console.log("gst image:", message.image);
+              serviceState = "bank_details";
+
+              const congratsText = await textToTextTranslationNMT(
+                "Congratulations! Step-2 of store onboarding is complete, your seller details have been successfully saved.",
+                selectedLanguageCode
+              );
+
+              const enterBankDetails = await textToTextTranslationNMT(
+                "Please enter your bank account holder name:",
+                selectedLanguageCode
+              );
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                congratsText
+              );
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                enterBankDetails
               );
             }
           }

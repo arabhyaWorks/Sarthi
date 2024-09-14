@@ -49,11 +49,12 @@ let storeData = {
   },
   sellerDetail: {
     sellerName: "",
-    companyName: "",
     aadharNumber: "",
     panNumber: "",
     gstNumber: "",
-    sellerDocument: [],
+    aadharImage: null,
+    panImage: null,
+    gstImage: null,
   },
   bankDetails: {
     accountHolderName: "",
