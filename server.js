@@ -22,8 +22,6 @@ import convertOggToWav from "./ogg2wav.js";
 import downloadFile from "./downloadAudio.js";
 import textToSpeech from "./ttsToOgg.js";
 
-console.log("this is text")
-
 
 const PORT = process.env.PORT || 3000;
 
@@ -36,9 +34,6 @@ const {
   WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_TOKEN,
 } = process.env;
-
-console.log("WEBHOOK_VERIFY_TOKEN", WEBHOOK_VERIFY_TOKEN);
-console.log("GRAPH_API_TOKEN", GRAPH_API_TOKEN);  
 
 let userName = "";
 let userNumber = "";
@@ -58,7 +53,7 @@ let productVariation = "";
 
 app.post("/webhook", async (req, res) => {
   const body = req.body;
-  console.log(body.entry[0].changes);
+  console.dir(body.entry[0].changes);
 
   if (body.object === "whatsapp_business_account") {
     const business_phone_number_id =
@@ -88,8 +83,6 @@ app.post("/webhook", async (req, res) => {
 
           if (message?.type === "text") {
             const messageText = message.text.body.toLowerCase();
-            // console.log("User said : ",messageText);
-            // console.log("Message object: ", message)
             console.log(userName, message.from, userLanguage, messageText);
             if (messageText === "hi") {
               await sendWelcomeMessage(business_phone_number_id, message);
@@ -101,6 +94,8 @@ app.post("/webhook", async (req, res) => {
               // await sendMessage(business_phone_number_id, message.from, txt);
               if (serviceState === "ask_question") {
                 const answers = await fetchAnswers(messageText);
+                await textToSpeech(answers, message.from);
+
                 await sendMessage(
                   business_phone_number_id,
                   message.from,
