@@ -22,6 +22,10 @@ import downloadFile from "./downloadAudio.js";
 import textToSpeech from "./ttsToOgg.js";
 
 import sendInteractiveButton from "./functions/interactiveButton.js";
+import sendImageWithCaption from "./functions/imageWithCaption.js";
+
+const storeOnboardingUri =
+  "https://ingenuityai.io/vyaparLaunchpad/storeOnboarding.png";
 
 const PORT = process.env.PORT || 3000;
 
@@ -80,7 +84,11 @@ app.post("/webhook", async (req, res) => {
           const message = change.value.messages[0];
           const senderId = message.from;
 
+          console.dir(message, { depth: null, colors: true });
+
           if (message?.type === "text") {
+            console.error("Message Received");
+            console.dir(message);
             const messageText = message.text.body.toLowerCase();
             // console.log(userName, message.from, userLanguage, messageText);
             console.log("Message Text:", messageText);
@@ -134,21 +142,58 @@ app.post("/webhook", async (req, res) => {
               );
               await sendMessage(business_phone_number_id, message.from, txt);
             } else if (
-              message.interactive.button_reply.id === "start_onboarding"
+              message.interactive.button_reply.id === "store_onboarding"
             ) {
-              serviceState = "start_onboarding";
-              const txt = await textToTextTranslationNMT(
-                "Let's onboard your Store. What is your shop's name?",
+              serviceState = "store_onboarding";
+              const title = await textToTextTranslationNMT(
+                "Get your store listed with Vyapaar Launchpad",
                 selectedLanguageCode
               );
-              await sendMessage(business_phone_number_id, message.from, txt);
+
+              const h1 = await textToTextTranslationNMT(
+                "Enter your Store Details",
+                selectedLanguageCode
+              );
+              const s1 = await textToTextTranslationNMT(
+                "Provide your shop name, address, and other essential information. This helps customers find and learn about your offerings.",
+                selectedLanguageCode
+              );
+
+              const h2 = await textToTextTranslationNMT(
+                "Enter Seller Details",
+                selectedLanguageCode
+              );
+              const s2 = await textToTextTranslationNMT(
+                "Share your name, Aadhar, PAN card and other legal documents. This ensures customers can easily reach you for inquiries and orders.",
+                selectedLanguageCode
+              );
+
+              const h3 = await textToTextTranslationNMT(
+                "Enter Bank Details",
+                selectedLanguageCode
+              );
+              const s3 = await textToTextTranslationNMT(
+                "Provide your bank account number and bank name securely. This enables smooth financial transactions for your business.",
+                selectedLanguageCode
+              );
+
+              const formattedMessage = `*${title}*\n\n*1. ${h1}*\n${s1}\n\n*2. ${h2}*\n${s2}\n\n*3. ${h3}*\n${s3}`;
+
+
+              const imageSent = await sendImageWithCaption(
+                storeOnboardingUri,
+                formattedMessage,
+                message.from
+              );
+              console.log("Image Sent:", imageSent);
+
             } else if (message.interactive.button_reply.id === "main_menu") {
               serviceState = "";
               let txt =
                 "Do you want to start onboarding your store or ask a question?";
               let buttons = [
                 {
-                  id: "start_onboarding",
+                  id: "store_onboarding",
                   title: "Start Onboarding",
                 },
                 {
@@ -441,7 +486,7 @@ const sendCapabilties = async (business_phone_number_id, to) => {
             {
               type: "reply",
               reply: {
-                id: "start_onboarding",
+                id: "store_onboarding",
                 title: "Start Onboarding",
               },
             },
