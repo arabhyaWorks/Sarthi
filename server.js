@@ -248,6 +248,78 @@ app.post("/webhook", async (req, res) => {
                   uploadAadhar
                 );
               }
+
+              // step 3 - Account holder name
+              else if (serviceState === "acc_holder_name") {
+                storeData.bankDetails.accountHolderName = messageText;
+                console.log("account holder name:", messageText);
+
+                serviceState = "acc_number";
+
+                const accNumber = await textToTextTranslationNMT(
+                  "Please enter your bank account number:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  accNumber
+                );
+              }
+
+              // step 3 - Account number
+              else if (serviceState === "acc_number") {
+                storeData.bankDetails.accountNumber = messageText;
+                console.log("account number:", messageText);
+
+                serviceState = "bank_name";
+
+                const bankName = await textToTextTranslationNMT(
+                  "Please enter your Bank name:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  bankName
+                );
+              }
+
+              // step 3 - Bank Name
+              else if (serviceState === "bank_name") {
+                storeData.bankDetails.bankName = messageText;
+                console.log("bank name:", messageText);
+
+                serviceState = "ifsc_code";
+
+                const ifscCode = await textToTextTranslationNMT(
+                  "Please enter your IFSC code:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  ifscCode
+                );
+              }
+
+              // step 3 - IFSC Code
+              else if (serviceState === "ifsc_code") {
+                storeData.bankDetails.ifscCode = messageText;
+                console.log("ifsc code:", messageText);
+
+                serviceState = "cancelled_cheque";
+
+                const uploadCheque = await textToTextTranslationNMT(
+                  "Please upload your cancelled cheque image via the attachment button.",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  uploadCheque
+                );
+              }
             }
           }
 
@@ -499,7 +571,7 @@ app.post("/webhook", async (req, res) => {
               storeData.sellerDetail.gstImage = message.image;
               // console.dir(storeData.sellerDetail.gstImage);
               console.log("gst image:", message.image);
-              serviceState = "bank_details";
+              serviceState = "acc_holder_name";
 
               const congratsText = await textToTextTranslationNMT(
                 "Congratulations! Step-2 of store onboarding is complete, your seller details have been successfully saved.",
@@ -519,6 +591,25 @@ app.post("/webhook", async (req, res) => {
                 business_phone_number_id,
                 message.from,
                 enterBankDetails
+              );
+            }
+
+            // step 3 - Cancelled Cheque Image
+            else if (serviceState === "cancelled_cheque") {
+              storeData.bankDetails.cancelledCheque = message.image;
+              // console.dir(storeData.bankDetails.cancelledCheque);
+              console.log("cancelled cheque:", message.image);
+              serviceState = "completed";
+
+              const congratsText = await textToTextTranslationNMT(
+                "Congratulations! Step-3 of store onboarding is complete, your bank details have been successfully saved.",
+                selectedLanguageCode
+              );
+
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                congratsText
               );
             }
           }
