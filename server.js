@@ -3,6 +3,10 @@ import axios from "axios";
 import bodyParser from "body-parser";
 import { textToTextTranslationNMT } from "./bhashini.js";
 import { languages, languageKey } from "./constants.js";
+import dotenv from "dotenv";
+dotenv.config();
+
+// // console.dir(object, { depth: null, colors: true });
 
 import sendMessage from "./sendMessage.js";
 import fetchAnswers from "./fetchAnswers.js";
@@ -18,7 +22,10 @@ import convertOggToWav from "./ogg2wav.js";
 import downloadFile from "./downloadAudio.js";
 import textToSpeech from "./ttsToOgg.js";
 
-const port = process.env.PORT || 3000;
+console.log("this is text")
+
+
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(bodyParser.json());
@@ -26,10 +33,12 @@ app.use(bodyParser.json());
 const {
   WEBHOOK_VERIFY_TOKEN,
   GRAPH_API_TOKEN,
-  PORT,
   WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_TOKEN,
 } = process.env;
+
+console.log("WEBHOOK_VERIFY_TOKEN", WEBHOOK_VERIFY_TOKEN);
+console.log("GRAPH_API_TOKEN", GRAPH_API_TOKEN);  
 
 let userName = "";
 let userNumber = "";
@@ -110,6 +119,7 @@ app.post("/webhook", async (req, res) => {
             message?.interactive?.list_reply?.id.startsWith("lang_")
           ) {
             selectedLanguageCode = message.interactive.list_reply.id.slice(5);
+            console.log("Selected Language: ", selectedLanguageCode);
             // Handle Send Capabilities
             sendCapabilties(business_phone_number_id, message.from);
 
@@ -167,7 +177,7 @@ app.post("/webhook", async (req, res) => {
               //   }
               // );
             } catch (error) {
-              console.error("Error in STT processing:", error);
+              console.error("Error in STT processing:", error.message);
             }
           }
         }
@@ -375,7 +385,7 @@ const downloadAudio = async (
           // return transcribedText;
         })
         .catch((error) => {
-          console.error("Error occurred:", error);
+          console.error("Error occurred:", error.message);
         });
     });
 };
@@ -393,6 +403,8 @@ const sendCapabilties = async (business_phone_number_id, to) => {
 
     Would you like to start your store onboarding process now or ask any questions about Vyapaar Launchpad's capabilities?
   `;
+
+  // console.log(introMessage)
 
   // Sending the introductory message first
   await sendMessage(business_phone_number_id, to, introMessage);

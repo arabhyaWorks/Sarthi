@@ -66,6 +66,8 @@ The following flowchart illustrates the Sarthi chatbot process for store onboard
 3. **Product Cataloging:**
    Provide options for product cataloging based on the seller's preferences, using scraping, voice input, or image upload.
 
+
+
 ---
 
 This README provides a clear overview of the Sarthi WhatsApp chatbot and its functionalities, following the flowchart and style from the example you've shared. Let me know if you need any adjustments!

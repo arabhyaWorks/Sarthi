@@ -1,4 +1,6 @@
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 const { GRAPH_API_TOKEN } = process.env;
 
 async function sendMessage(
