@@ -21,8 +21,10 @@ import convertOggToWav from "./ogg2wav.js";
 import downloadFile from "./downloadAudio.js";
 import textToSpeech from "./ttsToOgg.js";
 
+import storeData from "./functions/storeOnboarding.js";
 import sendInteractiveButton from "./functions/interactiveButton.js";
 import sendImageWithCaption from "./functions/imageWithCaption.js";
+import sendInteractiveList from "./functions/interactiveList.js";
 
 const storeOnboardingUri =
   "https://ingenuityai.io/vyaparLaunchpad/storeOnboarding.png";
@@ -59,6 +61,9 @@ app.post("/webhook", async (req, res) => {
   const body = req.body;
 
   if (body.object === "whatsapp_business_account") {
+    // console.log(body.entry[0][0].value)
+    // console.dir(body, { depth: null, colors: true });
+    // changes: [ { value: [Object], field: 'messages' } ]
     const business_phone_number_id =
       req.body.entry?.[0].changes?.[0].value?.metadata?.phone_number_id;
 
@@ -84,7 +89,9 @@ app.post("/webhook", async (req, res) => {
           const message = change.value.messages[0];
           const senderId = message.from;
 
-          console.dir(message, { depth: null, colors: true });
+          // console.dir(message, { depth: null, colors: true });
+
+          await markMessageAsRead(business_phone_number_id, message.id);
 
           if (message?.type === "text") {
             console.error("Message Received");
@@ -110,9 +117,45 @@ app.post("/webhook", async (req, res) => {
                   answers
                 );
               }
-            }
 
-            await markMessageAsRead(business_phone_number_id, message.id);
+              // Handling store onboarding
+              // Step 1 - Shop Name
+              else if (serviceState === "shop_name") {
+                storeData.storeDetail.shopName = messageText;
+                console.dir(storeData.storeDetail);
+                serviceState = "shop_category";
+
+                const enterStateText = await textToTextTranslationNMT(
+                  "Please select the category of your shop.From the following options",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterStateText
+                );
+
+                const body = await textToTextTranslationNMT(
+                  "Which of these best describes your products?\n\nPlease select the category of your shop.",
+                  selectedLanguageCode
+                );
+
+                const buttonTitle = await textToTextTranslationNMT(
+                  "Select Category",
+                  selectedLanguageCode
+                );
+                const list = storeData.storeDetail.category;
+
+                await sendInteractiveList(
+                  "",
+                  body,
+                  "",
+                  buttonTitle,
+                  list,
+                  message.from
+                );
+              }
+            }
           }
 
           // Handle languageSelection
@@ -126,7 +169,28 @@ app.post("/webhook", async (req, res) => {
             // Handle Send Capabilities
             sendCapabilties(business_phone_number_id, message.from);
 
-            await markMessageAsRead(business_phone_number_id, message.id);
+            // await markMessageAsRead(business_phone_number_id, message.id);
+          }
+          
+
+          // handle shop category selection
+          else if (
+            message?.type === "interactive" &&
+            message?.interactive?.type === "list_reply" &&
+            message?.interactive?.list_reply?.id.startsWith("cat_")
+          ) {
+            productCategory = message.interactive.list_reply.id.slice(4);
+            console.log("Selected Category: ", productCategory);
+            serviceState = "geo_location";
+            const enterTitleText = await textToTextTranslationNMT(
+              "Please upload your shop geolocation via the attachment button.",
+              selectedLanguageCode
+            );
+            await sendMessage(
+              business_phone_number_id,
+              message.from,
+              enterTitleText
+            );
           }
 
           // Handling all button replies
@@ -177,16 +241,31 @@ app.post("/webhook", async (req, res) => {
                 selectedLanguageCode
               );
 
-              const formattedMessage = `*${title}*\n\n*1. ${h1}*\n${s1}\n\n*2. ${h2}*\n${s2}\n\n*3. ${h3}*\n${s3}`;
+              const enterNameText = await textToTextTranslationNMT(
+                "I am going to start the store onboarding process. Please enter your shop name:",
+                selectedLanguageCode
+              );
 
+              const formattedMessage = `*${title}*\n\n*1. ${h1}*\n${s1}\n\n*2. ${h2}*\n${s2}\n\n*3. ${h3}*\n${s3}`;
 
               const imageSent = await sendImageWithCaption(
                 storeOnboardingUri,
                 formattedMessage,
                 message.from
               );
-              console.log("Image Sent:", imageSent);
 
+              if (imageSent) {
+                // Sending message for starting the store onboarding process
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterNameText
+                );
+
+                serviceState = "shop_name";
+              }
+
+              // console.log("Image Sent:", imageSent);
             } else if (message.interactive.button_reply.id === "main_menu") {
               serviceState = "";
               let txt =
@@ -204,7 +283,7 @@ app.post("/webhook", async (req, res) => {
 
               sendInteractiveButton(txt, buttons, message.from);
             }
-            await markMessageAsRead(business_phone_number_id, message.id);
+            // await markMessageAsRead(business_phone_number_id, message.id);
           } else if (message?.type === "audio" && message.audio?.voice) {
             const audioId = message.audio.id;
 
@@ -234,6 +313,23 @@ app.post("/webhook", async (req, res) => {
               // );
             } catch (error) {
               console.error("Error in STT processing:", error.message);
+            }
+          } else if (message?.type === "location") {
+
+            // handle geolocation
+            if (serviceState === "geo_location") {
+              storeData.geolocation = message.location;
+              console.log("Location:", message.location);
+              serviceState = "shop_address";
+              const enterAddressText = await textToTextTranslationNMT(
+                "Please enter your shop address in the following format: Shop Number, Street, Locality, City, State, Pincode",
+                selectedLanguageCode
+              );
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                enterAddressText
+              );
             }
           }
         }
@@ -290,22 +386,6 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
       },
     },
   });
-
-  //   Sending welcome message
-  // await axios({
-  //   method: "POST",
-  //   url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
-  //   headers: {
-  //     Authorization: `Bearer ${GRAPH_API_TOKEN}`,
-  //   },
-  //   data: {
-  //     messaging_product: "whatsapp",
-  //     to: message.from,
-  //     text: {
-  //       body: "Welcome to Vyapaar Launchpad! Vyapaar Launchpad is your one-stop platform for e-commerce solutions. Let's list your product on ONDC",
-  //     },
-  //   },
-  // });
 
   //   Sending language selection list
   await axios({

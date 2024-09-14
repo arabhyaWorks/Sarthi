@@ -1,5 +1,6 @@
-const dataObject = {
+const storeData = {
   storeDetail: {
+    shopName: "",
     category: [
       {
         id: "cat_food",
@@ -38,36 +39,31 @@ const dataObject = {
         title: "Sports",
       },
       {
-        id: "cat_stationery",
-        title: "Stationery",
-      },
-      {
-        id: "cat_toys",
-        title: "Toys",
-      },
-      {
         id: "cat_others",
         title: "Others",
       },
     ],
-    state: "State",
-    address: "Address",
-    pincode: "Pincode",
-    storePhotots: ["image1", "image1", "image1", "image1"],
+    geolocation: {},
+    state: "",
+    address: "",
+    pincode: "",
+    storePhotots: [],
   },
   sellerDetail: {
-    sellerName: "Seller Name",
-    companyName: "Company Name",
-    aadharNumber: "Aadhar Number",
-    panNumber: "Pan Number",
-    gstNumber: "GST Number",
-    sellerDocument: ["image1", "image1", "image1", "image1"],
+    sellerName: "",
+    companyName: "",
+    aadharNumber: "",
+    panNumber: "",
+    gstNumber: "",
+    sellerDocument: [],
   },
   bankDetails: {
-    accountHolderName: "Account Holder Name",
-    accountNumber: "Account Number",
-    bankName: "Bank Name",
-    ifscCode: "IFSC Code",
-    cancelledCheque: "Cancelled Cheque",
+    accountHolderName: "",
+    accountNumber: "",
+    bankName: "",
+    ifscCode: "",
+    cancelledCheque: "",
   },
 };
+
+export default storeData;
