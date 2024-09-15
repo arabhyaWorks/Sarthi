@@ -21,7 +21,7 @@ import convertOggToWav from "./ogg2wav.js";
 import downloadFile from "./downloadAudio.js";
 import textToSpeech from "./ttsToOgg.js";
 
-import storeData from "./functions/storeOnboarding.js";
+import { storeData, productData } from "./functions/storeOnboarding.js";
 import sendInteractiveButton from "./functions/interactiveButton.js";
 import sendImageWithCaption from "./functions/imageWithCaption.js";
 import sendInteractiveList from "./functions/interactiveList.js";
@@ -320,6 +320,92 @@ app.post("/webhook", async (req, res) => {
                   uploadCheque
                 );
               }
+
+              // Handling product cataloging
+              // Product Title
+              else if (serviceState === "product_title") {
+                productData.title = messageText;
+                console.log("Product Title:", messageText);
+                serviceState = "product_price";
+
+                const enterPrice = await textToTextTranslationNMT(
+                  "Please enter the price of your product:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterPrice
+                );
+              }
+
+              // Product Price
+              else if (serviceState === "product_price") {
+                productData.price = messageText;
+                console.log("Product Price:", messageText);
+                serviceState = "product_quantity";
+
+                const enterDescription = await textToTextTranslationNMT(
+                  "Please enter the number of units you want to list:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterDescription
+                );
+              }
+
+              // Product Quantity
+              else if (serviceState === "product_quantity") {
+                productData.quantity = messageText;
+                console.log("Product Quantity:", messageText);
+                serviceState = "product_description";
+
+                const enterDescription = await textToTextTranslationNMT(
+                  "Please enter the description of your product:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterDescription
+                );
+              }
+
+              // Product Description
+              else if (serviceState === "product_description") {
+                productData.description = messageText;
+                console.log("Product Description:", messageText);
+                serviceState = "product_variation";
+
+                const enterVariation = await textToTextTranslationNMT(
+                  "Please enter the variation of your product:",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterVariation
+                );
+              }
+
+              // Product Variation
+              else if (serviceState === "product_variation") {
+                productData.variation = messageText;
+                console.log("Product Variation:", messageText);
+                serviceState = "product_images";
+
+                const uploadImages = await textToTextTranslationNMT(
+                  "Please upload images of your product via the attachment button.",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  uploadImages
+                );
+              }
             }
           }
 
@@ -345,7 +431,7 @@ app.post("/webhook", async (req, res) => {
           ) {
             storeData.storeDetail.category =
               message.interactive.list_reply.id.slice(4);
-            console.log("Selected Category: ", productCategory);
+            console.log("Selected Category: ", storeData.storeDetail.category);
             serviceState = "geo_location";
             const enterTitleText = await textToTextTranslationNMT(
               "Please upload your shop geolocation via the attachment button.",
@@ -528,7 +614,7 @@ app.post("/webhook", async (req, res) => {
                 selectedLanguageCode
               );
 
-              const msg = `*${heading}*\n\n*1. ${t1}:* ${d1}\n\n*2. ${t2}:* ${d2}\n\n*3. ${t3}:* ${d3}`;
+              const msg = `*${heading}*\n\n*1. ${t1}:* ${d1}\n\n*2. ${t2}:* ${d2}\n\n*3. ${t3}:* ${d3}\n\n${footer}`;
 
               const buttons = [
                 {
@@ -546,14 +632,19 @@ app.post("/webhook", async (req, res) => {
               ];
 
               sendInteractiveButton(msg, buttons, message.from);
-              // await sendMessage(
-              //   business_phone_number_id,
-              //   message.from,
-              //   msg
-              // );
-              // serviceState = "product_title";
+            } else if (message.interactive.button_reply.id === "text_voice") {
+              serviceState = "product_title";
+
+              const someText = await textToTextTranslationNMT(
+                "Statring the product listing process. Please enter the title of your product:",
+                selectedLanguageCode
+              );
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                someText
+              );
             }
-            // await markMessageAsRead(business_phone_number_id, message.id);
           } else if (message?.type === "audio" && message.audio?.voice) {
             const audioId = message.audio.id;
 

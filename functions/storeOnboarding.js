@@ -65,8 +65,17 @@ let storeData = {
   },
 };
 
-export default storeData;
+let productData = {
+  title: "",
+  price: "",
+  quantity: "",
+  description: "",
+  variation: "",
+  productImages: [],
+};
 
+
+export { productData, storeData };
 
 // let storeData = {
 //   storeDetail: {
