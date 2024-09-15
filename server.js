@@ -150,9 +150,9 @@ app.post("/webhook", async (req, res) => {
                 const list = storeData.storeDetail.category;
 
                 await sendInteractiveList(
-                  "",
+                  " ",
                   body,
-                  "",
+                  " ",
                   buttonTitle,
                   list,
                   message.from
@@ -468,6 +468,7 @@ app.post("/webhook", async (req, res) => {
               }
             } else if (message.interactive.button_reply.id === "main_menu") {
               serviceState = "";
+              // User was asking question now he wants to start onboarding or ask one more question
               let txt =
                 "Do you want to start onboarding your store or ask a question?";
               let buttons = [
@@ -482,6 +483,75 @@ app.post("/webhook", async (req, res) => {
               ];
 
               sendInteractiveButton(txt, buttons, message.from);
+            } else if (message.interactive.button_reply.id === "str_listing") {
+              // const enterTitleText = await textToTextTranslationNMT(
+              //   "",
+              //   selectedLanguageCode
+              // );
+
+              const heading = await textToTextTranslationNMT(
+                "You can list your product using the following methods:",
+                selectedLanguageCode
+              );
+
+              const t1 = await textToTextTranslationNMT(
+                "Existing Store Link",
+                selectedLanguageCode
+              );
+              const d1 = await textToTextTranslationNMT(
+                "Provide the product link from platforms like Amazon, Google Shop, or Google Maps.",
+                selectedLanguageCode
+              );
+
+              const t2 = await textToTextTranslationNMT(
+                "Text or Voice Input",
+                selectedLanguageCode
+              );
+
+              const d2 = await textToTextTranslationNMT(
+                "Answer a guided questionnaire to submit product details.",
+                selectedLanguageCode
+              );
+
+              const t3 = await textToTextTranslationNMT(
+                "Upload Rate/Menu Card",
+                selectedLanguageCode
+              );
+
+              const d3 = await textToTextTranslationNMT(
+                "Scan and upload your rate card or menu card to list your products.",
+                selectedLanguageCode
+              );
+
+              const footer = await textToTextTranslationNMT(
+                "Ensure you have all product images and details ready. If needed, ask for assistance in obtaining the required documents or information before listing.",
+                selectedLanguageCode
+              );
+
+              const msg = `*${heading}*\n\n*1. ${t1}:* ${d1}\n\n*2. ${t2}:* ${d2}\n\n*3. ${t3}:* ${d3}`;
+
+              const buttons = [
+                {
+                  id: "exist_store",
+                  title: "Product Link",
+                },
+                {
+                  id: "text_voice",
+                  title: "Text or Voice",
+                },
+                {
+                  id: "upload_card",
+                  title: "Upload Image",
+                },
+              ];
+
+              sendInteractiveButton(msg, buttons, message.from);
+              // await sendMessage(
+              //   business_phone_number_id,
+              //   message.from,
+              //   msg
+              // );
+              // serviceState = "product_title";
             }
             // await markMessageAsRead(business_phone_number_id, message.id);
           } else if (message?.type === "audio" && message.audio?.voice) {
@@ -914,6 +984,14 @@ const sendCapabilties = async (business_phone_number_id, to) => {
                 title: "Start Onboarding",
               },
             },
+            {
+              type: "reply",
+              reply: {
+                id: "str_listing",
+                title: "Start Listing",
+              },
+            },
+
             {
               type: "reply",
               reply: {
