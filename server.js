@@ -21,10 +21,15 @@ import convertOggToWav from "./ogg2wav.js";
 import downloadFile from "./downloadAudio.js";
 import textToSpeech from "./ttsToOgg.js";
 
-import { storeData, productData } from "./functions/storeOnboarding.js";
+import {
+  storeData,
+  productData,
+  processedProductdata,
+} from "./functions/storeOnboarding.js";
 import sendInteractiveButton from "./functions/interactiveButton.js";
 import sendImageWithCaption from "./functions/imageWithCaption.js";
 import sendInteractiveList from "./functions/interactiveList.js";
+import processProductData from "./functions/processProductData.js";
 
 const storeOnboardingUri =
   "https://ingenuityai.io/vyaparLaunchpad/storeOnboarding.png";
@@ -44,7 +49,7 @@ const {
 let userName = "";
 let userNumber = "";
 
-let selectedLanguageCode = "";
+let selectedLanguageCode = "en";
 let userStates = {};
 let serviceState = "";
 
@@ -644,6 +649,50 @@ app.post("/webhook", async (req, res) => {
                 message.from,
                 someText
               );
+            } else if (message.interactive.button_reply.id === "con_product") {
+              console.log("confirm product processing");
+              const diffText = await textToTextTranslationNMT(
+                "Processing your product details and listing it on the ONDC platform. This may take a few minutes. You will receive a confirmation message once your product is live.",
+                selectedLanguageCode
+              );
+
+              const processeddata = processProductData(
+                productData.title,
+                productData.description,
+                productData.variation,
+                productData.price
+              );
+
+              sendMessage(business_phone_number_id, message.from, diffText);
+
+              processeddata.then((data) => {
+                const processedText = `*${
+                  processedProductdata.ProductName
+                }*\n\n*Product Tag Line:* ${
+                  processedProductdata.ProductTagline
+                }\n\n*Description*\n\n${
+                  processedProductdata.ProductDescription
+                }\n\n*About the Product*\n\n${processedProductdata.AboutProduct.map(
+                  (data, index) => {
+                    return `*•* ${data}\n`;
+                  }
+                )}\n\n*Market Pain Points*\n\n${processedProductdata.MarketPainPoints.map(
+                  (data, index) => {
+                    return `*•* ${data}\n`;
+                  }
+                )}\n\n*Market Entry Strategy*\n\n${processedProductdata.MarketEntryStrategy.map(
+                  (data, index) => {
+                    return `*•* ${data}\n`;
+                  }
+                )}
+                `;
+
+                sendImageWithCaption(
+                  storeOnboardingUri,
+                  processedText,
+                  message.from
+                );
+              });
             }
           } else if (message?.type === "audio" && message.audio?.voice) {
             const audioId = message.audio.id;
@@ -830,6 +879,51 @@ app.post("/webhook", async (req, res) => {
                   },
                   {
                     id: "con_edit",
+                    title: "Edit",
+                  },
+                ],
+                message.from
+              );
+            }
+
+            // Handling product image uploads
+            else if (serviceState === "product_images") {
+              productData.productImages = [
+                ...productData.productImages,
+                message.image,
+              ];
+
+              console.log("product image:", message.image);
+              serviceState = "raw_product_data";
+
+              const congratsText = await textToTextTranslationNMT(
+                "Congratulations! Your product details have been successfully saved.",
+                selectedLanguageCode
+              );
+
+              const title = await textToTextTranslationNMT(
+                "Please confirm the details provided by you, are given below:",
+                selectedLanguageCode
+              );
+
+              const footer = await textToTextTranslationNMT(
+                "If the details are correct, please confirm. If you want to edit, please select edit.",
+                selectedLanguageCode
+              );
+
+              // confirmText
+
+              const confirmText = `*${congratsText}*\n\n${title}\n\n*1. Product Name:* ${productData.title}\n*2. Price:* ${productData.price}\n*2. Quantity:* ${productData.quantity}\n*3. Descriptions:* ${productData.description}\n*4. Variation:* ${productData.variation}\n\n${footer}`;
+
+              sendInteractiveButton(
+                confirmText,
+                [
+                  {
+                    id: "con_product",
+                    title: "Confirm",
+                  },
+                  {
+                    id: "con_pro_edit",
                     title: "Edit",
                   },
                 ],
