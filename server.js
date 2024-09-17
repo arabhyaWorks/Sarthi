@@ -30,6 +30,7 @@ import sendInteractiveButton from "./functions/interactiveButton.js";
 import sendImageWithCaption from "./functions/imageWithCaption.js";
 import sendInteractiveList from "./functions/interactiveList.js";
 import processProductData from "./functions/processProductData.js";
+import fetchProductDataFromUrl from './fetchAmazonData/scrapAmazon.js'
 
 const storeOnboardingUri =
   "https://ingenuityai.io/vyaparLaunchpad/storeOnboarding.png";
@@ -102,11 +103,20 @@ app.post("/webhook", async (req, res) => {
           await markMessageAsRead(business_phone_number_id, message.id);
 
           if (message?.type === "text") {
-            console.error("Message Received");
-            console.dir(message);
+            // console.dir(message);
             const messageText = message.text.body.toLowerCase();
-            // console.log(userName, message.from, userLanguage, messageText);
-            console.log("Message Text:", messageText);
+
+            console.log(" ");
+            console.error("Message Received");
+            console.log(
+              userName + ": ",
+              messageText,
+              "Service State:",
+              serviceState
+            );
+            console.log("Service State:", serviceState);
+            console.log(" ");
+
             if (messageText === "hi") {
               await sendWelcomeMessage(business_phone_number_id, message);
             } else {
@@ -411,6 +421,12 @@ app.post("/webhook", async (req, res) => {
                   uploadImages
                 );
               }
+
+              else if (serviceState === "get_product_link") {
+                const productData = await fetchProductDataFromUrl(messageText);
+                console.log(productData);
+                
+              }
             }
           }
 
@@ -642,6 +658,18 @@ app.post("/webhook", async (req, res) => {
 
               const someText = await textToTextTranslationNMT(
                 "Statring the product listing process. Please enter the title of your product:",
+                selectedLanguageCode
+              );
+              await sendMessage(
+                business_phone_number_id,
+                message.from,
+                someText
+              );
+            } else if (message.interactive.button_reply.id === "exist_store") {
+              serviceState = "get_product_link";
+
+              const someText = await textToTextTranslationNMT(
+                "Please enter the link of your product listed on Amazon, Flipkart, Myntra, Meesho etc:",
                 selectedLanguageCode
               );
               await sendMessage(
