@@ -8,9 +8,6 @@ import { classifyInput } from "./functions/openAi.js";
 
 dotenv.config();
 
-
-
-
 // this is service
 // // console.dir(object, { depth: null, colors: true });
 
@@ -27,6 +24,7 @@ import SpeechToText from "./stt.js";
 import convertOggToWav from "./ogg2wav.js";
 import downloadFile from "./downloadAudio.js";
 import textToSpeech from "./ttsToOgg.js";
+import bhashiniTTS from "./bhashiniTTS.js";
 
 import {
   storeData,
@@ -60,8 +58,8 @@ let userNumber = "";
 
 let selectedLanguageCode = "en";
 let userStates = {};
-let serviceState = "shop_name";
-// let serviceState = "";
+// let serviceState = "shop_name";
+let serviceState = "";
 
 let shopName = "";
 let stateName = "";
@@ -151,6 +149,10 @@ app.post("/webhook", async (req, res) => {
                 storeData.storeDetail.shopName = messageText;
                 console.dir(storeData.storeDetail);
                 serviceState = "shop_category";
+                console.log(
+                  "input type text setting service state to shop_category",
+                  serviceState
+                );
 
                 const enterStateText = await textToTextTranslationNMT(
                   "Please select the category of your shop. From the following options",
@@ -181,6 +183,9 @@ app.post("/webhook", async (req, res) => {
                   list,
                   message.from
                 );
+                setTimeout(async () => {
+                  await bhashiniTTS(body, message.from, selectedLanguageCode);
+                }, 1000);
               }
 
               // Step 1 - Shop Address
@@ -198,6 +203,13 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   shopPhotosText
                 );
+                setTimeout(async () => {
+                  await bhashiniTTS(
+                    shopPhotosText,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }, 1000);
               }
 
               // step 2 - Seller Name
@@ -534,6 +546,14 @@ app.post("/webhook", async (req, res) => {
               message.from,
               enterTitleText
             );
+
+            setTimeout(async () => {
+              await bhashiniTTS(
+                enterTitleText,
+                message.from,
+                selectedLanguageCode
+              );
+            }, 1000);
           }
 
           // Handling all button replies
@@ -603,6 +623,11 @@ app.post("/webhook", async (req, res) => {
                 formattedMessage,
                 message.from
               );
+              await bhashiniTTS(
+                formattedMessage,
+                message.from,
+                selectedLanguageCode
+              );
 
               if (imageSent) {
                 // Sending message for starting the store onboarding process
@@ -612,7 +637,15 @@ app.post("/webhook", async (req, res) => {
                     message.from,
                     enterNameText
                   );
-                }, 1500);
+                }, 3000);
+
+                setTimeout(async () => {
+                  await bhashiniTTS(
+                    enterNameText,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }, 4500);
 
                 serviceState = "shop_name";
               }
@@ -875,6 +908,13 @@ app.post("/webhook", async (req, res) => {
                 message.from,
                 enterAddressText
               );
+              setTimeout(async () => {
+                await bhashiniTTS(
+                  enterAddressText,
+                  message.from,
+                  selectedLanguageCode
+                );
+              }, 1000);
             }
           }
 
@@ -905,6 +945,14 @@ app.post("/webhook", async (req, res) => {
                 message.from,
                 enterSellerNameText
               );
+
+              setTimeout(async () => {
+                await bhashiniTTS(
+                  enterSellerNameText,
+                  message.from,
+                  selectedLanguageCode
+                );
+              });
             }
 
             // step 2 - Seller Aadhar Image
@@ -1227,7 +1275,6 @@ const downloadAudio = async (
   business_phone_number_id,
   audioId,
   message,
-  serviceState,
   selectedLanguageCode
 ) => {
   const url = `https://graph.facebook.com/v16.0/${audioId}`;
@@ -1262,55 +1309,119 @@ const downloadAudio = async (
               sendMessage(business_phone_number_id, message.from, answers);
             });
           } else {
-            classifyInput(transcribedText, selectedLanguageCode).then(async (messageText)=>{
-              console.log(messageText);
-              if(!messageText.includes("#######")){
-                sendMessage(business_phone_number_id, message.from, messageText);
-              }else{
+            classifyInput(transcribedText, selectedLanguageCode).then(
+              async (data) => {
+                console.log(data);
+                let messageText = transcribedText;
+                if (!data.includes("#######")) {
+                  sendMessage(business_phone_number_id, message.from, data);
+                } else {
+                  // Handling store onboarding
+                  // Step 1 - Shop Name
+                  if (serviceState === "shop_name") {
+                    storeData.storeDetail.shopName = messageText;
+                    console.dir(storeData.storeDetail);
+                    serviceState = "shop_category";
+                    console.log("Service state", serviceState);
 
+                    const enterStateText = await textToTextTranslationNMT(
+                      "Please select the category of your shop. From the following options",
+                      selectedLanguageCode
+                    );
+                    await sendMessage(
+                      business_phone_number_id,
+                      message.from,
+                      enterStateText
+                    );
 
+                    const body = await textToTextTranslationNMT(
+                      "Which of these best describes your products?\n\nPlease select the category of your shop.",
+                      selectedLanguageCode
+                    );
 
-              // Handling store onboarding
-              // Step 1 - Shop Name
-               if (serviceState === "shop_name") {
-                storeData.storeDetail.shopName = messageText;
-                console.dir(storeData.storeDetail);
-                serviceState = "shop_category";
+                    const buttonTitle = await textToTextTranslationNMT(
+                      "Select Category",
+                      selectedLanguageCode
+                    );
+                    const list = storeData.storeDetail.category;
 
-                const enterStateText = await textToTextTranslationNMT(
-                  "Please select the category of your shop. From the following options",
-                  selectedLanguageCode
-                );
-                await sendMessage(
-                  business_phone_number_id,
-                  message.from,
-                  enterStateText
-                );
+                    await sendInteractiveList(
+                      " ",
+                      body,
+                      " ",
+                      buttonTitle,
+                      list,
+                      message.from
+                    );
 
-                const body = await textToTextTranslationNMT(
-                  "Which of these best describes your products?\n\nPlease select the category of your shop.",
-                  selectedLanguageCode
-                );
+                    setTimeout(async () => {
+                      await bhashiniTTS(
+                        body,
+                        message.from,
+                        selectedLanguageCode
+                      );
+                    }, 1000);
 
-                const buttonTitle = await textToTextTranslationNMT(
-                  "Select Category",
-                  selectedLanguageCode
-                );
-                const list = storeData.storeDetail.category;
+                    console.log("   ");
+                    console.log("------- Service State --------");
+                    console.log(serviceState);
+                    console.log("------- Service State --------");
+                    console.log("   ");
+                  } else if (serviceState == "shop_category") {
+                    console.log("   ");
+                    console.log("------- Service State --------");
+                    console.log(serviceState);
+                    console.log("------- Service State --------");
+                    console.log("   ");
+                    storeData.storeDetail.category = messageText;
+                    console.log("Selected category: ", messageText);
+                    // console.log(
+                    //   "Selected Category: ",
+                    //   storeData.storeDetail.category
+                    // );
+                    serviceState = "geo_location";
+                    const enterTitleText = await textToTextTranslationNMT(
+                      "Please upload your shop geolocation via the attachment button.",
+                      selectedLanguageCode
+                    );
+                    await sendMessage(
+                      business_phone_number_id,
+                      message.from,
+                      enterTitleText
+                    );
 
-                await sendInteractiveList(
-                  " ",
-                  body,
-                  " ",
-                  buttonTitle,
-                  list,
-                  message.from
-                );
+                    setTimeout(async () => {
+                      await bhashiniTTS(
+                        enterTitleText,
+                        message.from,
+                        selectedLanguageCode
+                      );
+                    }, 1000);
+                  } else if (serviceState === "shop_address") {
+                    storeData.storeDetail.address = messageText;
+                    console.dir(storeData.storeDetail);
+                    serviceState = "shop_photos";
+
+                    const shopPhotosText = await textToTextTranslationNMT(
+                      "Please upload your shop photos via the attachment button.",
+                      selectedLanguageCode
+                    );
+                    await sendMessage(
+                      business_phone_number_id,
+                      message.from,
+                      shopPhotosText
+                    );
+                    setTimeout(async () => {
+                      await bhashiniTTS(
+                        shopPhotosText,
+                        message.from,
+                        selectedLanguageCode
+                      );
+                    }, 1000);
+                  }
+                }
               }
-
-              }
-            })
-            
+            );
           }
         })
         .catch((error) => {

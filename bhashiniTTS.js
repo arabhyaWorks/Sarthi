@@ -11,14 +11,8 @@ import ttsServiceId from "./bhashini/ttsServiceId.js";
 
 dotenv.config();
 
-let sendToNumber = "+919452624111";
 
 const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
-// console.log(GRAPH_API_TOKEN);
-
-const textString =
-  "Vyapar Launchpad is an innovative platform designed to assist small and medium-sized businesses in seamlessly entering and managing their presence across multiple e-commerce platforms, particularly focusing on the ONDC (Open Network for Digital Commerce) ecosystem. It simplifies the onboarding process for sellers, enabling them to set up their online stores with minimal effort through a user-friendly interface.";
-
 // Text To Speech, WAV to OGG conversion
 
 // Fix __filename and __dirname in ES modules
@@ -46,7 +40,7 @@ const sendAudio = async (audioId, messageFrom, selectedLanguageCode) => {
       }
     );
 
-    goBack(messageFrom,selectedLanguageCode);
+    // goBack(messageFrom,selectedLanguageCode);
   
     console.log("Audio sent to WhatsApp:", response.data);
     return response.data;
@@ -135,7 +129,7 @@ const fetchAudio = async (text, selectedLanguageCode) => {
 };
 
 // Download audio as a WAV file
-const textToSpeech = async (text, messageFrom, selectedLanguageCode) => {
+const bhashiniTTS = async (text, messageFrom, selectedLanguageCode) => {
   const filename = "audios";
   const audioSrc = await fetchAudio(text, selectedLanguageCode);
   if (!audioSrc) {
@@ -180,4 +174,4 @@ const convertWavToOgg = (input, output, messageFrom, selectedLanguageCode) => {
 
 // Example usage
 // textToSpeech(textString,);
-export default textToSpeech;
+export default bhashiniTTS;
