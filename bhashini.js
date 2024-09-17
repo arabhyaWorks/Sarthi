@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { query } from 'express';
 
 const axiosApiInstance = axios.create({
   baseURL: 'https://dhruva-api.bhashini.gov.in/services/inference/pipeline',
@@ -32,6 +33,7 @@ const request = async (method, req) => {
 };
 
 export const textToTextTranslationNMT = async (text, targetLanguage) => {
+  console.log({query:text, targetLanguage:targetLanguage});
   const reqObj = {
     pipelineTasks: [
       {

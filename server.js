@@ -884,7 +884,6 @@ app.post("/webhook", async (req, res) => {
                 business_phone_number_id,
                 audioId,
                 message,
-                serviceState,
                 selectedLanguageCode
               );
             } catch (error) {
