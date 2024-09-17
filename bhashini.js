@@ -61,7 +61,7 @@ export const textToTextTranslationNMT = async (text, targetLanguage) => {
       return null;
     }
   } catch (error) {
-    console.error('textToTextTranslationNMT error:', error);
+    console.error('textToTextTranslationNMT error:', error.message);
     return null;
   }
 };
