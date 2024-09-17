@@ -1238,10 +1238,10 @@ const downloadAudio = async (
 
   // Now download the actual audio file
   const oggPath = path.join(__dirname, `${audioId}.ogg`);
-  const wavPath = path.join(__dirname, `${audioId}.wav`);
+  // const wavPath = path.join(__dirname, `${audioId}.wav`);
 
   downloadFile(audioUrl, oggPath, GRAPH_API_TOKEN)
-    .then(() => convertOggToWav(oggPath, wavPath))
+    // .then(() => convertOggToWav(oggPath, wavPath))
     .then(async (wavPath) => {
       console.log("Conversion to WAV successful");
       // console.log(wavPath);

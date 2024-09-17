@@ -121,6 +121,14 @@ const speechToText = async (audioId, selectedLanguageCode) => {
 
     const transcribedText = response.data;
 
+    fs.unlink(`${audioId}.ogg`, (err) => {
+      if (err) {
+        console.error(`Error deleting file`, err);
+      } else {
+        console.log(`File deleted`);
+      }
+    });
+
     // Extract and return transcribed text (add null-checking to avoid undefined issues)
     // const transcribedText = response.data?.pipelineTasks?.[0]?.outputData?.source || 'Transcription not found';
     return transcribedText.pipelineResponse[0].output[0].source;
