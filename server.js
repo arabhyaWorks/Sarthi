@@ -4,6 +4,8 @@ import bodyParser from "body-parser";
 import { textToTextTranslationNMT } from "./bhashini.js";
 import { languages, languageKey } from "./constants.js";
 import dotenv from "dotenv";
+import { classifyInput } from "./functions/openAi.js";
+
 dotenv.config();
 // // console.dir(object, { depth: null, colors: true });
 
@@ -53,8 +55,8 @@ let userNumber = "";
 
 let selectedLanguageCode = "en";
 let userStates = {};
-// let serviceState = "get_product_link";
-let serviceState = "";
+let serviceState = "shop_name";
+// let serviceState = "";
 
 let shopName = "";
 let stateName = "";
@@ -605,7 +607,7 @@ app.post("/webhook", async (req, res) => {
                     message.from,
                     enterNameText
                   );
-                }, 1000);
+                }, 1500);
 
                 serviceState = "shop_name";
               }
@@ -840,12 +842,6 @@ app.post("/webhook", async (req, res) => {
             const audioId = message.audio.id;
 
             try {
-              // const transcript = await downloadAudio(
-              //   business_phone_number_id,
-              //   audioId,
-              //   message
-              // );
-
               downloadAudio(
                 business_phone_number_id,
                 audioId,
@@ -853,17 +849,6 @@ app.post("/webhook", async (req, res) => {
                 serviceState,
                 selectedLanguageCode
               );
-              // .then(
-              //   (transcript) => {
-              //     console.log("Transcript: ", transcript);
-              //     sendMessage(
-              //       business_phone_number_id,
-              //       message.from,
-              //       transcript
-              //     );
-
-              //   }
-              // );
             } catch (error) {
               console.error("Error in STT processing:", error.message);
             }
@@ -1271,6 +1256,56 @@ const downloadAudio = async (
               textToSpeech(answers, message.from, selectedLanguageCode);
               sendMessage(business_phone_number_id, message.from, answers);
             });
+          } else {
+            classifyInput(transcribedText, selectedLanguageCode).then(async (messageText)=>{
+              console.log(messageText);
+              if(!messageText.includes("#######")){
+                sendMessage(business_phone_number_id, message.from, messageText);
+              }else{
+
+
+
+              // Handling store onboarding
+              // Step 1 - Shop Name
+               if (serviceState === "shop_name") {
+                storeData.storeDetail.shopName = messageText;
+                console.dir(storeData.storeDetail);
+                serviceState = "shop_category";
+
+                const enterStateText = await textToTextTranslationNMT(
+                  "Please select the category of your shop. From the following options",
+                  selectedLanguageCode
+                );
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterStateText
+                );
+
+                const body = await textToTextTranslationNMT(
+                  "Which of these best describes your products?\n\nPlease select the category of your shop.",
+                  selectedLanguageCode
+                );
+
+                const buttonTitle = await textToTextTranslationNMT(
+                  "Select Category",
+                  selectedLanguageCode
+                );
+                const list = storeData.storeDetail.category;
+
+                await sendInteractiveList(
+                  " ",
+                  body,
+                  " ",
+                  buttonTitle,
+                  list,
+                  message.from
+                );
+              }
+
+              }
+            })
+            
           }
         })
         .catch((error) => {
