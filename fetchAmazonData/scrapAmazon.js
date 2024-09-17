@@ -3,11 +3,13 @@ import fs from "fs";
 
 // Function to extract ASIN from Amazon product URL
 function getAsinFromUrl(url) {
-  // Use regex to match the ASIN pattern between 'dp/' and '/ref'
-  const asinMatch = url.match(/\/dp\/([A-Z0-9]{10})\/ref/);
+  // Convert the URL to lowercase and use regex to match the ASIN pattern between 'dp/' and '/ref'
+  const asinMatch = url.match(/\/dp\/([A-Z0-9]{10})\/ref/i);
   const asin = asinMatch ? asinMatch[1] : null;
-  return asin;
+  // console.log(asin.toUpperCase());
+  return asin.toUpperCase();
 }
+
 // Function to fetch product data using the ASIN code
 async function fetchProductDataFromUrl(productUrl) {
   const asin = getAsinFromUrl(productUrl);
@@ -21,7 +23,7 @@ async function fetchProductDataFromUrl(productUrl) {
   const payload = {
     source: "amazon_product",
     query: asin,
-    domain: "in", 
+    domain: "in",
     geo_location: "221010",
     parse: true,
   };
@@ -47,8 +49,8 @@ async function fetchProductDataFromUrl(productUrl) {
       images: response.data.results[0].content.images,
     };
 
-    console.log(productData);
-
+    // console.log(productData);
+    return productData;
     // Save response to a file (optional)
     // fs.writeFile('output.json', JSON.stringify(productData, null, 4), (err) => {
     //   if (err) throw err;
@@ -66,4 +68,4 @@ async function fetchProductDataFromUrl(productUrl) {
 
 // fetchProductDataFromUrl()
 
-// export default fetchProductDataFromUrl;
+export default fetchProductDataFromUrl;

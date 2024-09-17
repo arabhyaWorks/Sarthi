@@ -30,7 +30,7 @@ import sendInteractiveButton from "./functions/interactiveButton.js";
 import sendImageWithCaption from "./functions/imageWithCaption.js";
 import sendInteractiveList from "./functions/interactiveList.js";
 import processProductData from "./functions/processProductData.js";
-import fetchProductDataFromUrl from './fetchAmazonData/scrapAmazon.js'
+import fetchProductDataFromUrl from "./fetchAmazonData/scrapAmazon.js";
 
 const storeOnboardingUri =
   "https://ingenuityai.io/vyaparLaunchpad/storeOnboarding.png";
@@ -52,6 +52,7 @@ let userNumber = "";
 
 let selectedLanguageCode = "en";
 let userStates = {};
+// let serviceState = "get_product_link";
 let serviceState = "";
 
 let shopName = "";
@@ -420,12 +421,70 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   uploadImages
                 );
-              }
+              } else if (serviceState === "get_product_link") {
+                const scrappingText = await textToTextTranslationNMT(
+                  "Fetching product details from the provided link. Please wait.",
+                  selectedLanguageCode
+                );
 
-              else if (serviceState === "get_product_link") {
-                const productData = await fetchProductDataFromUrl(messageText);
-                console.log(productData);
-                
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  scrappingText
+                );
+                const scrappedProductData = await fetchProductDataFromUrl(
+                  messageText
+                );
+
+                productData.title = scrappedProductData.title;
+                productData.price = scrappedProductData.price.toString();
+                productData.description = scrappedProductData.about;
+                productData.productImages = scrappedProductData.images;
+
+                serviceState = "raw_product_data";
+
+                const congratsText = await textToTextTranslationNMT(
+                  "Congratulations! Your product details have been fetched successfully.",
+                  selectedLanguageCode
+                );
+
+                const title = await textToTextTranslationNMT(
+                  "Please confirm the details provided by you, are given below:",
+                  selectedLanguageCode
+                );
+
+                const footer = await textToTextTranslationNMT(
+                  "If the details are correct, please confirm. If you want to edit, please select edit.",
+                  selectedLanguageCode
+                );
+
+                const confirmText = `*${congratsText}*\n\n${title}\n\n*1. Product Name:* ${productData.title}\n*2. Price:* ${productData.price}\n*2. Quantity:* ${productData.quantity}`;
+
+                const moreData = `*3. Descriptions:* ${productData.description}\n\n${footer}`;
+
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  confirmText
+                );
+
+                // Run the second function after 1 second (1000 milliseconds)
+                setTimeout(() => {
+                  sendInteractiveButton(
+                    moreData,
+                    [
+                      {
+                        id: "con_product",
+                        title: "Confirm",
+                      },
+                      {
+                        id: "con_pro_edit",
+                        title: "Edit",
+                      },
+                    ],
+                    message.from
+                  );
+                }, 1000); // 1000 milliseconds = 1 second
               }
             }
           }
@@ -684,6 +743,9 @@ app.post("/webhook", async (req, res) => {
                 selectedLanguageCode
               );
 
+              console.log("Product Data:", productData);
+              console.log(typeof productData.price);
+
               const processeddata = processProductData(
                 productData.title,
                 productData.description,
@@ -693,30 +755,48 @@ app.post("/webhook", async (req, res) => {
 
               sendMessage(business_phone_number_id, message.from, diffText);
 
+              if (processProductData) {
+                console.log("");
+                console.log("--------- Processed Data ---------");
+                console.log("");
+                console.log("Processed Data:", processeddata);
+                console.log("");
+                console.log("--------- Processed Data ---------");
+                console.log("");
+              }
+
               processeddata.then((data) => {
+                console.log("");
+                console.log("--------- Processed Data ---------");
+                console.log("");
+                console.log("Processed Data:", data);
+                console.log("");
+                console.log("--------- Processed Data ---------");
+                console.log("");
+
                 const processedText = `*${
-                  processedProductdata.ProductName
+                  data.ProductName
                 }*\n\n*Product Tag Line:* ${
-                  processedProductdata.ProductTagline
+                  data.ProductTagline
                 }\n\n*Description*\n\n${
-                  processedProductdata.ProductDescription
-                }\n\n*About the Product*\n\n${processedProductdata.AboutProduct.map(
-                  (data, index) => {
-                    return `*•* ${data}\n`;
+                  data.ProductDescription
+                }\n\n*About the Product*\n\n${data.AboutProduct.map(
+                  (item, index) => {
+                    return `*•* ${item}\n`;
                   }
-                )}\n\n*Market Pain Points*\n\n${processedProductdata.MarketPainPoints.map(
-                  (data, index) => {
-                    return `*•* ${data}\n`;
+                )}\n\n*Market Pain Points*\n\n${data.MarketPainPoints.map(
+                  (item, index) => {
+                    return `*•* ${item}\n`;
                   }
-                )}\n\n*Market Entry Strategy*\n\n${processedProductdata.MarketEntryStrategy.map(
-                  (data, index) => {
-                    return `*•* ${data}\n`;
+                )}\n\n*Market Entry Strategy*\n\n${data.MarketEntryStrategy.map(
+                  (item, index) => {
+                    return `*•* ${item}\n`;
                   }
                 )}
                 `;
 
                 sendImageWithCaption(
-                  storeOnboardingUri,
+                  productData.productImages[0],
                   processedText,
                   message.from
                 );
