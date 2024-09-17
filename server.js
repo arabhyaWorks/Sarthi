@@ -7,6 +7,11 @@ import dotenv from "dotenv";
 import { classifyInput } from "./functions/openAi.js";
 
 dotenv.config();
+
+
+
+
+// this is service
 // // console.dir(object, { depth: null, colors: true });
 
 import sendMessage from "./sendMessage.js";
