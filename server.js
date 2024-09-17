@@ -128,7 +128,7 @@ app.post("/webhook", async (req, res) => {
               // await sendMessage(business_phone_number_id, message.from, txt);
               if (serviceState === "ask_question") {
                 const answers = await fetchAnswers(messageText);
-                await textToSpeech(answers, message.from);
+                await textToSpeech(answers, message.from, selectedLanguageCode);
 
                 await sendMessage(
                   business_phone_number_id,
@@ -498,7 +498,11 @@ app.post("/webhook", async (req, res) => {
             selectedLanguageCode = message.interactive.list_reply.id.slice(5);
             console.log("Selected Language: ", selectedLanguageCode);
             // Handle Send Capabilities
-            sendCapabilties(business_phone_number_id, message.from);
+            sendCapabilties(
+              business_phone_number_id,
+              message.from,
+              selectedLanguageCode
+            );
 
             // await markMessageAsRead(business_phone_number_id, message.id);
           }
@@ -645,8 +649,10 @@ app.post("/webhook", async (req, res) => {
             } else if (message.interactive.button_reply.id === "main_menu") {
               serviceState = "";
               // User was asking question now he wants to start onboarding or ask one more question
-              let txt =
-                "Do you want to start onboarding your store or ask a question?";
+              let txt = await textToTextTranslationNMT(
+                "Do you want to start onboarding your store or ask a question?",
+                selectedLanguageCode
+              );
               let buttons = [
                 {
                   id: "store_onboarding",
@@ -843,7 +849,8 @@ app.post("/webhook", async (req, res) => {
                 business_phone_number_id,
                 audioId,
                 message,
-                serviceState
+                serviceState,
+                selectedLanguageCode
               );
               // .then(
               //   (transcript) => {
@@ -1222,7 +1229,8 @@ const downloadAudio = async (
   business_phone_number_id,
   audioId,
   message,
-  serviceState
+  serviceState,
+  selectedLanguageCode
 ) => {
   const url = `https://graph.facebook.com/v16.0/${audioId}`;
   console.log("Fetching audio metadata from:", url);
@@ -1246,19 +1254,16 @@ const downloadAudio = async (
       console.log("Conversion to WAV successful");
       // console.log(wavPath);
 
-      SpeechToText(audioId)
+      SpeechToText(audioId, selectedLanguageCode)
         .then((transcribedText) => {
           console.log("Transcription Result:", transcribedText);
           sendMessage(business_phone_number_id, message.from, transcribedText);
           if (serviceState === "ask_question") {
             fetchAnswers(transcribedText).then((answers) => {
-              textToSpeech(answers, message.from);
+              textToSpeech(answers, message.from, selectedLanguageCode);
               sendMessage(business_phone_number_id, message.from, answers);
             });
           }
-          // return transcribedText;
-
-          // return transcribedText;
         })
         .catch((error) => {
           console.error("Error occurred:", error.message);
@@ -1266,7 +1271,11 @@ const downloadAudio = async (
     });
 };
 
-const sendCapabilties = async (business_phone_number_id, to) => {
+const sendCapabilties = async (
+  business_phone_number_id,
+  to,
+  selectedLanguageCode
+) => {
   const header = await textToTextTranslationNMT(
     "With Vyapar Launchpad, you can access the following services:",
     selectedLanguageCode

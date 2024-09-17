@@ -1,10 +1,11 @@
 import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
+import { textToTextTranslationNMT } from "../bhashini.js";
 
 const { GRAPH_API_TOKEN, BUSINESS_PHONE_NUMBER_ID } = process.env;
 
-const goBack = async (messageFrom) => {
+const goBack = async (messageFrom, selectedLanguageCode) => {
   console.log("Going back to main menu");
   await axios({
     method: "POST",
@@ -19,7 +20,10 @@ const goBack = async (messageFrom) => {
       interactive: {
         type: "button",
         body: {
-          text: "You could ask more questions by typing your query, sending a voice message. or go back to main menu?",
+          text: await textToTextTranslationNMT(
+            "You could ask more questions by typing your query, sending a voice message. or go back to main menu?",
+            selectedLanguageCode
+          ),
         },
         action: {
           buttons: [

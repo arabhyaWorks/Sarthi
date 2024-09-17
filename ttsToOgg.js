@@ -24,7 +24,7 @@ const textString =
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const sendAudio = async (audioId, messageFrom) => {
+const sendAudio = async (audioId, messageFrom, selectedLanguageCode) => {
   try {
     // Make the API request to send the audio message
     const response = await axios.post(
@@ -45,7 +45,7 @@ const sendAudio = async (audioId, messageFrom) => {
       }
     );
 
-    goBack(messageFrom);
+    goBack(messageFrom,selectedLanguageCode);
   
     console.log("Audio sent to WhatsApp:", response.data);
     return response.data;
@@ -54,7 +54,7 @@ const sendAudio = async (audioId, messageFrom) => {
     throw error;
   }
 };
-const getAudioId = async (location, messageFrom) => {
+const getAudioId = async (location, messageFrom, selectedLanguageCode) => {
   try {
     // Create a FormData instance
     const formData = new FormData();
@@ -83,7 +83,7 @@ const getAudioId = async (location, messageFrom) => {
     // Extract and return the media ID (audio ID)
     const audioId = response.data.id;
     console.log(`Audio ID: ${audioId}`);
-    sendAudio(audioId, messageFrom);
+    sendAudio(audioId, messageFrom, selectedLanguageCode);
     return audioId;
   } catch (error) {
     console.error("Error uploading audio:", error.message);
@@ -134,7 +134,7 @@ const fetchAudio = async (text) => {
 };
 
 // Download audio as a WAV file
-const textToSpeech = async (text, messageFrom) => {
+const textToSpeech = async (text, messageFrom, selectedLanguageCode) => {
   const filename = "audios";
   const audioSrc = await fetchAudio(text);
   if (!audioSrc) {
@@ -151,12 +151,12 @@ const textToSpeech = async (text, messageFrom) => {
   console.log(`Audio saved to ${filePath}`);
 
   // Convert WAV to OGG
-  await convertWavToOgg(filename, filename, messageFrom); // Use the same name for input/output
+  await convertWavToOgg(filename, filename, messageFrom, selectedLanguageCode); // Use the same name for input/output
   console.log("Conversion successful!");
 };
 
 // Function to convert WAV to OGG
-const convertWavToOgg = (input, output, messageFrom) => {
+const convertWavToOgg = (input, output, messageFrom, selectedLanguageCode) => {
   const inputWav = path.join(__dirname, `${input}.wav`);
   const outputOgg = path.join(__dirname, `${output}.ogg`);
 
@@ -167,7 +167,7 @@ const convertWavToOgg = (input, output, messageFrom) => {
       .on("end", () => {
         console.log(`Conversion to OGG completed: ${outputOgg}`);
         resolve(outputOgg);
-        getAudioId(output, messageFrom);
+        getAudioId(output, messageFrom, selectedLanguageCode);
       })
       .on("error", (err) => {
         console.error("Error during WAV to OGG conversion:", err.message);

@@ -7,8 +7,13 @@ const {
   WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_TOKEN,
 } = process.env;
+import { textToTextTranslationNMT } from "./bhashini";
 
-async function sendCapabilties(business_phone_number_id, to) {
+async function sendCapabilties(
+  business_phone_number_id,
+  to,
+  selectedLanguageCode
+) {
   const introMessage = `
     Welcome to Vyapaar Launchpad! 🚀
 
@@ -39,7 +44,10 @@ async function sendCapabilties(business_phone_number_id, to) {
       interactive: {
         type: "button",
         body: {
-          text: "Do you want to start onboarding your store or ask a question?",
+          text: await textToTextTranslationNMT(
+            "Do you want to start onboarding your store or ask a question?",
+            selectedLanguageCode
+          ),
         },
         action: {
           buttons: [

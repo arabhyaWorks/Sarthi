@@ -57,6 +57,7 @@ import fs from "fs";
 import axios from "axios";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import asrServiceId from "./bhashini/asrServiceId.js";
 
 // Get __dirname equivalent in ES module scope
 const __filename = fileURLToPath(import.meta.url);
@@ -82,9 +83,9 @@ const speechToText = async (audioId, selectedLanguageCode) => {
         taskType: "asr",
         config: {
           language: {
-            sourceLanguage: "hi",
+            sourceLanguage: selectedLanguageCode,
           },
-          serviceId: "ai4bharat/conformer-hi-gpu--t4",
+          serviceId: asrServiceId[selectedLanguageCode],
           audioFormat: "ogg",
           samplingRate: 16000,
         },
