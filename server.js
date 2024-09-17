@@ -31,6 +31,7 @@ import sendImageWithCaption from "./functions/imageWithCaption.js";
 import sendInteractiveList from "./functions/interactiveList.js";
 import processProductData from "./functions/processProductData.js";
 import fetchProductDataFromUrl from "./fetchAmazonData/scrapAmazon.js";
+import sendAudio from "./functions/sendStaticAudios.js";
 
 const storeOnboardingUri =
   "https://ingenuityai.io/vyaparLaunchpad/storeOnboarding.png";
@@ -1107,6 +1108,12 @@ app.listen(PORT, () => {
 });
 
 async function sendWelcomeMessage(business_phone_number_id, message) {
+  const welcomeText = `व्यापार लॉन्चपैड में आपका स्वागत है! 🎉
+यह एक ऐसा प्लेटफार्म है जहाँ आपको सभी ई-कॉमर्स से जुड़ी सुविधाएँ मिलेंगी। 🛒
+आइए, व्यापार लॉन्चपैड की मदद से हम ONDC नेटवर्क पर भारत को आगे बढ़ाएँ! 🇮🇳
+
+Welcome to Vyapar Launchpad! 🚀
+Your all-in-one platform for seamless e-commerce solutions. #VyaparLaunchpadkiMadadSeONDCNetworkParBharatKhulega`;
   const imageUri =
     "https://raw.githubusercontent.com/arabhyaWorks/Sarthi/main/vyaparLogo3-min.png?token=GHSAT0AAAAAACVW3TC2ZQJV7PWFNKX3AENWZXD6LZA";
   // Sending image
@@ -1122,14 +1129,15 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
       type: "image",
       image: {
         link: "https://mbagdtopics.com/wp-content/uploads/2024/01/ONDC-2-1.png",
-        caption:
-          "Welcome to Vyapaar Launchpad! Vyapaar Launchpad is your one-stop platform for e-commerce solutions. Let's list your product on ONDC",
+        caption: welcomeText,
       },
       context: {
         message_id: message.id,
       },
     },
   });
+
+  sendAudio("852924290272348", message.from);
 
   //   Sending language selection list
 
@@ -1168,7 +1176,7 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
         },
       },
     });
-  }, 1000); // 1000 milliseconds = 1 second
+  }, 1500); // 1000 milliseconds = 1 second
 }
 
 async function sendProductCatalogingPrompt(business_phone_number_id, to) {
