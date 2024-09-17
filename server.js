@@ -145,7 +145,7 @@ app.post("/webhook", async (req, res) => {
                 serviceState = "shop_category";
 
                 const enterStateText = await textToTextTranslationNMT(
-                  "Please select the category of your shop.From the following options",
+                  "Please select the category of your shop. From the following options",
                   selectedLanguageCode
                 );
                 await sendMessage(
@@ -572,10 +572,17 @@ app.post("/webhook", async (req, res) => {
                 selectedLanguageCode
               );
 
-              const enterNameText = await textToTextTranslationNMT(
-                "I am going to start the store onboarding process. Please enter your shop name:",
+              const s4 = await textToTextTranslationNMT(
+                "I am going to start the store registration process.",
                 selectedLanguageCode
               );
+
+              const s5 = await textToTextTranslationNMT(
+                "Please enter your shop name:",
+                selectedLanguageCode
+              );
+
+              const enterNameText = `${s4}\n\n*${s5}*`;
 
               const formattedMessage = `*${title}*\n\n*1. ${h1}*\n${s1}\n\n*2. ${h2}*\n${s2}\n\n*3. ${h3}*\n${s3}`;
 
@@ -587,11 +594,13 @@ app.post("/webhook", async (req, res) => {
 
               if (imageSent) {
                 // Sending message for starting the store onboarding process
-                await sendMessage(
-                  business_phone_number_id,
-                  message.from,
-                  enterNameText
-                );
+                setTimeout(async () => {
+                  await sendMessage(
+                    business_phone_number_id,
+                    message.from,
+                    enterNameText
+                  );
+                }, 1000);
 
                 serviceState = "shop_name";
               }
@@ -605,6 +614,10 @@ app.post("/webhook", async (req, res) => {
               const congrats = await textToTextTranslationNMT(
                 "Congratulations! Your store is now live on the ONDC platform. You can view it through the Vyapar Launchpad Seller app, website, or by following this link [https://vyaparfrontend.vercel.app/Ajay-store]. To promote your store, you can also share your ONDC store QR code, which is provided below.",
                 "hi"
+              );
+              const procatalog = await textToTextTranslationNMT(
+                "You can also manage your product catalog directly through WhatsApp. Would you like to do it now or later? Feel free to update your catalog at any time on any platform—WhatsApp, the app, or the website—based on your convenience. Additionally, if you have any questions or need help with day-to-day operations, we’re here to assist!",
+                selectedLanguageCode
               );
 
               const sendImage = await sendImageWithCaption(
@@ -625,12 +638,9 @@ app.post("/webhook", async (req, res) => {
                   },
                 ];
 
-                const procatalog = await textToTextTranslationNMT(
-                  "You can also manage your product catalog directly through WhatsApp. Would you like to do it now or later? Feel free to update your catalog at any time on any platform—WhatsApp, the app, or the website—based on your convenience. Additionally, if you have any questions or need help with day-to-day operations, we’re here to assist!",
-                  selectedLanguageCode
-                );
-
-                sendInteractiveButton(procatalog, proButtons, message.from);
+                setTimeout(async () => {
+                  sendInteractiveButton(procatalog, proButtons, message.from);
+                }, 1000);
               }
             } else if (message.interactive.button_reply.id === "main_menu") {
               serviceState = "";
@@ -715,10 +725,17 @@ app.post("/webhook", async (req, res) => {
             } else if (message.interactive.button_reply.id === "text_voice") {
               serviceState = "product_title";
 
-              const someText = await textToTextTranslationNMT(
-                "Statring the product listing process. Please enter the title of your product:",
+              const h1 = await textToTextTranslationNMT(
+                "I am going to ask you a few questions to list your product on the ONDC platform.",
                 selectedLanguageCode
               );
+
+              const s2 = await textToTextTranslationNMT(
+                "Please enter the title of your product:",
+                selectedLanguageCode
+              );
+
+              const someText = `${h1}\n\n*${s2}*`;
               await sendMessage(
                 business_phone_number_id,
                 message.from,
@@ -780,7 +797,14 @@ app.post("/webhook", async (req, res) => {
                   data.ProductTagline
                 }\n\n*Description*\n\n${
                   data.ProductDescription
-                }\n\n*About the Product*\n\n${data.AboutProduct.map(
+                }\n\n*Market Entry Strategy*\n\n${data.MarketEntryStrategy.map(
+                  (item, index) => {
+                    return `*•* ${item}\n`;
+                  }
+                )}
+                `;
+
+                const moreText = `*About the Product*\n\n${data.AboutProduct.map(
                   (item, index) => {
                     return `*•* ${item}\n`;
                   }
@@ -788,18 +812,21 @@ app.post("/webhook", async (req, res) => {
                   (item, index) => {
                     return `*•* ${item}\n`;
                   }
-                )}\n\n*Market Entry Strategy*\n\n${data.MarketEntryStrategy.map(
-                  (item, index) => {
-                    return `*•* ${item}\n`;
-                  }
-                )}
-                `;
+                )}`;
 
                 sendImageWithCaption(
                   productData.productImages[0],
                   processedText,
                   message.from
                 );
+
+                setTimeout(async () => {
+                  await sendMessage(
+                    business_phone_number_id,
+                    message.from,
+                    moreText
+                  );
+                }, 2000);
               });
             }
           } else if (message?.type === "audio" && message.audio?.voice) {
@@ -961,7 +988,7 @@ app.post("/webhook", async (req, res) => {
 
               const title = await textToTextTranslationNMT(
                 "Please confirm the details provided by you, are given below:",
-                "en"
+                selectedLanguageCode
               );
 
               const confirmText = `${title}\n\n*1. STORE DETAILS*\na. Shop Name: ${storeData.storeDetail.shopName}\nb. Shop Category: ${storeData.storeDetail.category}\nc. Address : ${storeData.storeDetail.address}\n\n*2. SELLER DETAILS*\na. Seller name : ${storeData.sellerDetail.sellerName}\nb. Aadhar number : ${storeData.sellerDetail.aadharNumber}\nc. Pan Number : ${storeData.sellerDetail.panNumber}\nd. GST number : ${storeData.sellerDetail.gstNumber}\n\n*3. BANK DETAILS*\na. Bank holder name : ${storeData.bankDetails.accountHolderName}\nb. Bank account number : ${storeData.bankDetails.accountNumber}\nc. Bank Name : ${storeData.bankDetails.bankName}\nd. IFSC code : ${storeData.bankDetails.ifscCode}`;
@@ -979,7 +1006,10 @@ app.post("/webhook", async (req, res) => {
               );
 
               sendInteractiveButton(
-                "If the details are correct, please confirm. If you want to edit, please select edit.",
+                await textToTextTranslationNMT(
+                  "If the details are correct, please confirm. If you want to edit, please select edit.",
+                  selectedLanguageCode
+                ),
                 [
                   {
                     id: "con_store",
@@ -1095,40 +1125,43 @@ async function sendWelcomeMessage(business_phone_number_id, message) {
   });
 
   //   Sending language selection list
-  await axios({
-    method: "POST",
-    url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
-    headers: {
-      Authorization: `Bearer ${GRAPH_API_TOKEN}`,
-    },
-    data: {
-      messaging_product: "whatsapp",
-      to: message.from,
-      type: "interactive",
-      interactive: {
-        type: "list",
-        header: {
-          type: "text",
-          text: "",
-        },
-        body: {
-          text: "Please select a language from the following:\n\nकृपया भाषा का चयन करें:",
-        },
-        footer: {
-          text: "Tap to select a language",
-        },
-        action: {
-          button: "Select Language",
-          sections: [
-            {
-              title: "Language Selection",
-              rows: languages,
-            },
-          ],
+
+  setTimeout(async () => {
+    await axios({
+      method: "POST",
+      url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
+      headers: {
+        Authorization: `Bearer ${GRAPH_API_TOKEN}`,
+      },
+      data: {
+        messaging_product: "whatsapp",
+        to: message.from,
+        type: "interactive",
+        interactive: {
+          type: "list",
+          header: {
+            type: "text",
+            text: "",
+          },
+          body: {
+            text: "Please select a language from the following:\n\nकृपया भाषा का चयन करें:",
+          },
+          footer: {
+            text: "Tap to select a language",
+          },
+          action: {
+            button: "Select Language",
+            sections: [
+              {
+                title: "Language Selection",
+                rows: languages,
+              },
+            ],
+          },
         },
       },
-    },
-  });
+    });
+  }, 1000); // 1000 milliseconds = 1 second
 }
 
 async function sendProductCatalogingPrompt(business_phone_number_id, to) {
@@ -1234,18 +1267,33 @@ const downloadAudio = async (
 };
 
 const sendCapabilties = async (business_phone_number_id, to) => {
-  const introMessage = `
-    Welcome to Vyapaar Launchpad! 🚀
+  const header = await textToTextTranslationNMT(
+    "With Vyapar Launchpad, you can access the following services:",
+    selectedLanguageCode
+  );
 
-    Vyapaar Launchpad is your all-in-one solution for managing your business across e-commerce platforms, especially ONDC. We help you:
+  const s1 = await textToTextTranslationNMT(
+    "Easily onboard your store to various platforms.",
+    selectedLanguageCode
+  );
+  const s2 = await textToTextTranslationNMT(
+    "Manage product cataloging through data upload, voice/text input, or menu scans.",
+    selectedLanguageCode
+  );
+  const s3 = await textToTextTranslationNMT(
+    "Get instant updates on orders, reviews, and stock through WhatsApp.",
+    selectedLanguageCode
+  );
+  const s4 = await textToTextTranslationNMT(
+    "Clear any doubts about selling online or on ONDC.",
+    selectedLanguageCode
+  );
+  const footer = await textToTextTranslationNMT(
+    "Would you like to start your store onboarding or ask any questions.",
+    selectedLanguageCode
+  );
 
-    - 📋 Easily onboard your store on ONDC and other platforms like Amazon, Flipkart, and Meesho.
-    - 📦 Catalog and manage your products, with options to upload existing store data, provide details through voice/text, or even scan your menu.
-    - 📊 Receive real-time updates on orders, reviews, stock levels, and more, all directly to WhatsApp.
-    - 🔍 Clear any doubts or myths you might have about e-commerce and how ONDC works, so you can make informed decisions.
-
-    Would you like to start your store onboarding process now or ask any questions about Vyapaar Launchpad's capabilities?
-  `;
+  const introMessage = `${header}\n\n• 📋${s1}\n• 📦${s2}\n• 📊${s3}\n• 🔍${s4}\n\n${footer}`;
 
   // console.log(introMessage)
 
@@ -1266,7 +1314,10 @@ const sendCapabilties = async (business_phone_number_id, to) => {
       interactive: {
         type: "button",
         body: {
-          text: "Do you want to start onboarding your store or ask a question?",
+          text: await textToTextTranslationNMT(
+            "Do you want to start onboarding your store or ask a question?",
+            selectedLanguageCode
+          ),
         },
         action: {
           buttons: [

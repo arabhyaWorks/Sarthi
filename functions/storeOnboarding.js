@@ -73,7 +73,9 @@ let productData = {
     "Earthen water bottles made from pure clay, which keeps the water cool for a long time naturally. These bottles are handmade and are of premium quality.",
   variation:
     "Variations of the bottles are available, you can choose the size and design of the bottle.",
-  productImages: [],
+  productImages: [
+    "https://www.ellementry.com/cdn/shop/products/tctea0930_00.jpg",
+  ],
 };
 
 let processedProductdata = {
