@@ -33,7 +33,7 @@ const request = async (method, req) => {
 };
 
 export const textToTextTranslationNMT = async (text, targetLanguage) => {
-  console.log({query:text, targetLanguage:targetLanguage});
+  // console.log({query:text, targetLanguage:targetLanguage});
   const reqObj = {
     pipelineTasks: [
       {

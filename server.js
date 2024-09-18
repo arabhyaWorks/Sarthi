@@ -227,6 +227,12 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   enterAadhar
                 );
+
+                await bhashiniTTS(
+                  enterAadhar,
+                  message.from,
+                  selectedLanguageCode
+                );
               }
 
               // step 2 - Seller Aadhar Number
@@ -246,6 +252,7 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   enterPan
                 );
+                await bhashiniTTS(enterPan, message.from, selectedLanguageCode);
               }
 
               // step 2 - Seller PAN Number
@@ -265,6 +272,7 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   enterGST
                 );
+                await bhashiniTTS(enterGST, message.from, selectedLanguageCode);
               }
 
               // step 2 - Seller GST Number
@@ -282,6 +290,11 @@ app.post("/webhook", async (req, res) => {
                   business_phone_number_id,
                   message.from,
                   uploadAadhar
+                );
+                await bhashiniTTS(
+                  uploadAadhar,
+                  message.from,
+                  selectedLanguageCode
                 );
               }
 
@@ -301,6 +314,11 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   accNumber
                 );
+                await bhashiniTTS(
+                  accNumber,
+                  message.from,
+                  selectedLanguageCode
+                );
               }
 
               // step 3 - Account number
@@ -319,6 +337,7 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   bankName
                 );
+                await bhashiniTTS(bankName, message.from, selectedLanguageCode);
               }
 
               // step 3 - Bank Name
@@ -337,6 +356,7 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   ifscCode
                 );
+                await bhashiniTTS(ifscCode, message.from, selectedLanguageCode);
               }
 
               // step 3 - IFSC Code
@@ -354,6 +374,11 @@ app.post("/webhook", async (req, res) => {
                   business_phone_number_id,
                   message.from,
                   uploadCheque
+                );
+                await bhashiniTTS(
+                  uploadCheque,
+                  message.from,
+                  selectedLanguageCode
                 );
               }
 
@@ -373,6 +398,11 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   enterPrice
                 );
+                await bhashiniTTS(
+                  enterPrice,
+                  message.from,
+                  selectedLanguageCode
+                );
               }
 
               // Product Price
@@ -389,6 +419,11 @@ app.post("/webhook", async (req, res) => {
                   business_phone_number_id,
                   message.from,
                   enterDescription
+                );
+                await bhashiniTTS(
+                  enterDescription,
+                  message.from,
+                  selectedLanguageCode
                 );
               }
 
@@ -407,6 +442,11 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   enterDescription
                 );
+                await bhashiniTTS(
+                  enterDescription,
+                  message.from,
+                  selectedLanguageCode
+                );
               }
 
               // Product Description
@@ -424,6 +464,11 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   enterVariation
                 );
+                await bhashiniTTS(
+                  enterVariation,
+                  message.from,
+                  selectedLanguageCode
+                );
               }
 
               // Product Variation
@@ -440,6 +485,11 @@ app.post("/webhook", async (req, res) => {
                   business_phone_number_id,
                   message.from,
                   uploadImages
+                );
+                await bhashiniTTS(
+                  uploadImages,
+                  message.from,
+                  selectedLanguageCode
                 );
               } else if (serviceState === "get_product_link") {
                 const scrappingText = await textToTextTranslationNMT(
@@ -939,11 +989,19 @@ app.post("/webhook", async (req, res) => {
                 congratsText
               );
 
-              await sendMessage(
-                business_phone_number_id,
+              await bhashiniTTS(
+                congratsText,
                 message.from,
-                enterSellerNameText
+                selectedLanguageCode
               );
+
+              setTimeout(async () => {
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterSellerNameText
+                );
+              }, 2000);
 
               setTimeout(async () => {
                 await bhashiniTTS(
@@ -951,7 +1009,7 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   selectedLanguageCode
                 );
-              });
+              }, 3000);
             }
 
             // step 2 - Seller Aadhar Image
@@ -971,6 +1029,12 @@ app.post("/webhook", async (req, res) => {
                 message.from,
                 uploadPan
               );
+
+              await bhashiniTTS(
+                uploadPan,
+                message.from,
+                selectedLanguageCode
+              );
             }
 
             // step 2 - Seller PAN Image
@@ -988,6 +1052,11 @@ app.post("/webhook", async (req, res) => {
                 business_phone_number_id,
                 message.from,
                 uploadGST
+              );
+              await bhashiniTTS(
+                uploadGST,
+                message.from,
+                selectedLanguageCode
               );
             }
 
@@ -1012,11 +1081,27 @@ app.post("/webhook", async (req, res) => {
                 message.from,
                 congratsText
               );
-              await sendMessage(
-                business_phone_number_id,
+              await bhashiniTTS(
+                congratsText,
                 message.from,
-                enterBankDetails
+                selectedLanguageCode
               );
+              setTimeout(async () => {
+                await sendMessage(
+                  business_phone_number_id,
+                  message.from,
+                  enterBankDetails
+                );
+              }, 2000);
+
+              setTimeout(async () => {
+                await bhashiniTTS(
+                  enterBankDetails,
+                  message.from,
+                  selectedLanguageCode
+                );
+              }, 3000);
+
             }
 
             // step 3 - Cancelled Cheque Image
@@ -1174,8 +1259,10 @@ Your all-in-one platform for seamless e-commerce solutions. #VyaparLaunchpadkiMa
     },
   });
 
-  sendAudio("852924290272348", message.from);
+  setTimeout(async () => {
+    sendAudio("852924290272348", message.from);
 
+  }, 2000); // 1000 milliseconds = 1 second
   //   Sending language selection list
 
   setTimeout(async () => {
@@ -1213,7 +1300,7 @@ Your all-in-one platform for seamless e-commerce solutions. #VyaparLaunchpadkiMa
         },
       },
     });
-  }, 1500); // 1000 milliseconds = 1 second
+  }, 2500); // 1000 milliseconds = 1 second
 }
 
 async function sendProductCatalogingPrompt(business_phone_number_id, to) {
