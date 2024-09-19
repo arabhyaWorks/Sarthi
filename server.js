@@ -1390,7 +1390,7 @@ const downloadAudio = async (
           console.log("Transcription Result:", transcribedText);
           sendMessage(business_phone_number_id, message.from, transcribedText);
           if (serviceState === "ask_question") {
-            fetchAnswers(transcribedText).then((answers) => {
+            fetchAnswers(transcribedText, selectedLanguageCode).then((answers) => {
               textToSpeech(answers, message.from, selectedLanguageCode);
               sendMessage(business_phone_number_id, message.from, answers);
             });
