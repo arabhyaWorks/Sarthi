@@ -1,6 +1,11 @@
 import axios from "axios";
+import OpenAI from "openai";
 
 const { ABHIPRAY_ENDPOINT } = process.env;
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 const fetchAnswers = async (query, selectedLanguageCode) => {
   // console.log("Fetching answers for query:", query);

@@ -5,6 +5,7 @@ import { textToTextTranslationNMT } from "./bhashini.js";
 import { languages, languageKey } from "./constants.js";
 import dotenv from "dotenv";
 import { classifyInput } from "./functions/openAi.js";
+import storeOnboardingAudios from "./Audios.js";
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ import sendInteractiveList from "./functions/interactiveList.js";
 import processProductData from "./functions/processProductData.js";
 import fetchProductDataFromUrl from "./fetchAmazonData/scrapAmazon.js";
 import sendAudio from "./functions/sendStaticAudios.js";
+import { send } from "process";
 
 const storeOnboardingUri =
   "https://ingenuityai.io/vyaparLaunchpad/storeOnboarding.png";
@@ -184,7 +186,14 @@ app.post("/webhook", async (req, res) => {
                   message.from
                 );
                 setTimeout(async () => {
-                  await bhashiniTTS(body, message.from, selectedLanguageCode);
+                  if (selectedLanguageCode === "en") {
+                    sendAudio(
+                      storeOnboardingAudios.selectCategory,
+                      message.from
+                    );
+                  } else {
+                    await bhashiniTTS(body, message.from, selectedLanguageCode);
+                  }
                 }, 1000);
               }
 
@@ -204,11 +213,15 @@ app.post("/webhook", async (req, res) => {
                   shopPhotosText
                 );
                 setTimeout(async () => {
-                  await bhashiniTTS(
-                    shopPhotosText,
-                    message.from,
-                    selectedLanguageCode
-                  );
+                  if (selectedLanguageCode === "en") {
+                    sendAudio(storeOnboardingAudios.shopPhotos, message.from);
+                  } else {
+                    await bhashiniTTS(
+                      shopPhotosText,
+                      message.from,
+                      selectedLanguageCode
+                    );
+                  }
                 }, 1000);
               }
 
@@ -228,11 +241,15 @@ app.post("/webhook", async (req, res) => {
                   enterAadhar
                 );
 
-                await bhashiniTTS(
-                  enterAadhar,
-                  message.from,
-                  selectedLanguageCode
-                );
+                if (selectedLanguageCode === "en") {
+                  sendAudio(storeOnboardingAudios.aadharNum, message.from);
+                } else {
+                  await bhashiniTTS(
+                    enterAadhar,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }
 
               // step 2 - Seller Aadhar Number
@@ -252,7 +269,15 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   enterPan
                 );
-                await bhashiniTTS(enterPan, message.from, selectedLanguageCode);
+                if (selectedLanguageCode === "en") {
+                  sendAudio(storeOnboardingAudios.panNum, message.from);
+                } else {
+                  await bhashiniTTS(
+                    enterPan,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }
 
               // step 2 - Seller PAN Number
@@ -272,7 +297,16 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   enterGST
                 );
-                await bhashiniTTS(enterGST, message.from, selectedLanguageCode);
+
+                if (selectedLanguageCode === "en") {
+                  sendAudio(storeOnboardingAudios.shopGST, message.from);
+                } else {
+                  await bhashiniTTS(
+                    enterGST,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }
 
               // step 2 - Seller GST Number
@@ -291,11 +325,15 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   uploadAadhar
                 );
-                await bhashiniTTS(
-                  uploadAadhar,
-                  message.from,
-                  selectedLanguageCode
-                );
+                if (selectedLanguageCode === "en") {
+                  sendAudio(storeOnboardingAudios.aadharImage, message.from);
+                } else {
+                  await bhashiniTTS(
+                    uploadAadhar,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }
 
               // step 3 - Account holder name
@@ -314,11 +352,18 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   accNumber
                 );
-                await bhashiniTTS(
-                  accNumber,
-                  message.from,
-                  selectedLanguageCode
-                );
+                if (selectedLanguageCode === "en") {
+                  sendAudio(
+                    storeOnboardingAudios.bankAccountNumber,
+                    message.from
+                  );
+                } else {
+                  await bhashiniTTS(
+                    accNumber,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }
 
               // step 3 - Account number
@@ -337,7 +382,18 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   bankName
                 );
-                await bhashiniTTS(bankName, message.from, selectedLanguageCode);
+                if (selectedLanguageCode === "en") {
+                  sendAudio(
+                    storeOnboardingAudios.bankName,
+                    message.from
+                  );
+                } else {
+                  await bhashiniTTS(
+                    bankName,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }
 
               // step 3 - Bank Name
@@ -356,7 +412,15 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   ifscCode
                 );
-                await bhashiniTTS(ifscCode, message.from, selectedLanguageCode);
+                if (selectedLanguageCode === "en") {
+                  sendAudio(storeOnboardingAudios.ifscCode, message.from);
+                } else {
+                  await bhashiniTTS(
+                    ifscCode,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }
 
               // step 3 - IFSC Code
@@ -375,11 +439,18 @@ app.post("/webhook", async (req, res) => {
                   message.from,
                   uploadCheque
                 );
-                await bhashiniTTS(
-                  uploadCheque,
-                  message.from,
-                  selectedLanguageCode
-                );
+                if (selectedLanguageCode === "en") {
+                  sendAudio(
+                    storeOnboardingAudios.cancelledCheque,
+                    message.from
+                  );
+                } else {
+                  await bhashiniTTS(
+                    uploadCheque,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }
 
               // Handling product cataloging
@@ -598,11 +669,15 @@ app.post("/webhook", async (req, res) => {
             );
 
             setTimeout(async () => {
-              await bhashiniTTS(
-                enterTitleText,
-                message.from,
-                selectedLanguageCode
-              );
+              if (selectedLanguageCode === "en") {
+                sendAudio(storeOnboardingAudios.geolocation, message.from);
+              } else {
+                await bhashiniTTS(
+                  enterTitleText,
+                  message.from,
+                  selectedLanguageCode
+                );
+              }
             }, 1000);
           }
 
@@ -673,11 +748,16 @@ app.post("/webhook", async (req, res) => {
                 formattedMessage,
                 message.from
               );
-              await bhashiniTTS(
-                formattedMessage,
-                message.from,
-                selectedLanguageCode
-              );
+
+              if (selectedLanguageCode === "en") {
+                sendAudio(storeOnboardingAudios.storeOnboarding, message.from);
+              } else {
+                await bhashiniTTS(
+                  formattedMessage,
+                  message.from,
+                  selectedLanguageCode
+                );
+              }
 
               if (imageSent) {
                 // Sending message for starting the store onboarding process
@@ -690,11 +770,15 @@ app.post("/webhook", async (req, res) => {
                 }, 3000);
 
                 setTimeout(async () => {
-                  await bhashiniTTS(
-                    enterNameText,
-                    message.from,
-                    selectedLanguageCode
-                  );
+                  if (selectedLanguageCode === "en") {
+                    sendAudio(storeOnboardingAudios.shopName, message.from);
+                  } else {
+                    await bhashiniTTS(
+                      enterNameText,
+                      message.from,
+                      selectedLanguageCode
+                    );
+                  }
                 }, 4500);
 
                 serviceState = "shop_name";
@@ -958,11 +1042,15 @@ app.post("/webhook", async (req, res) => {
                 enterAddressText
               );
               setTimeout(async () => {
-                await bhashiniTTS(
-                  enterAddressText,
-                  message.from,
-                  selectedLanguageCode
-                );
+                if (selectedLanguageCode === "en") {
+                  sendAudio(storeOnboardingAudios.shopAddress, message.from);
+                } else {
+                  await bhashiniTTS(
+                    enterAddressText,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }, 1000);
             }
           }
@@ -989,11 +1077,15 @@ app.post("/webhook", async (req, res) => {
                 congratsText
               );
 
-              await bhashiniTTS(
-                congratsText,
-                message.from,
-                selectedLanguageCode
-              );
+              if (selectedLanguageCode === "en") {
+                sendAudio(storeOnboardingAudios.step1Congo, message.from);
+              } else {
+                await bhashiniTTS(
+                  congratsText,
+                  message.from,
+                  selectedLanguageCode
+                );
+              }
 
               setTimeout(async () => {
                 await sendMessage(
@@ -1004,11 +1096,15 @@ app.post("/webhook", async (req, res) => {
               }, 2000);
 
               setTimeout(async () => {
-                await bhashiniTTS(
-                  enterSellerNameText,
-                  message.from,
-                  selectedLanguageCode
-                );
+                if (selectedLanguageCode === "en") {
+                  sendAudio(storeOnboardingAudios.sellerName, message.from);
+                } else {
+                  await bhashiniTTS(
+                    enterSellerNameText,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }, 3000);
             }
 
@@ -1029,12 +1125,15 @@ app.post("/webhook", async (req, res) => {
                 message.from,
                 uploadPan
               );
-
-              await bhashiniTTS(
-                uploadPan,
-                message.from,
-                selectedLanguageCode
-              );
+              if (selectedLanguageCode === "en") {
+                sendAudio(storeOnboardingAudios.panImage, message.from);
+              } else {
+                await bhashiniTTS(
+                  uploadPan,
+                  message.from,
+                  selectedLanguageCode
+                );
+              }
             }
 
             // step 2 - Seller PAN Image
@@ -1053,11 +1152,15 @@ app.post("/webhook", async (req, res) => {
                 message.from,
                 uploadGST
               );
-              await bhashiniTTS(
-                uploadGST,
-                message.from,
-                selectedLanguageCode
-              );
+              if (selectedLanguageCode === "en") {
+                sendAudio(storeOnboardingAudios.gstImage, message.from);
+              } else {
+                await bhashiniTTS(
+                  uploadGST,
+                  message.from,
+                  selectedLanguageCode
+                );
+              }
             }
 
             // step 2 - Seller GST Image
@@ -1081,11 +1184,15 @@ app.post("/webhook", async (req, res) => {
                 message.from,
                 congratsText
               );
-              await bhashiniTTS(
-                congratsText,
-                message.from,
-                selectedLanguageCode
-              );
+              if (selectedLanguageCode === "en") {
+                sendAudio(storeOnboardingAudios.step2Congo, message.from);
+              } else {
+                await bhashiniTTS(
+                  congratsText,
+                  message.from,
+                  selectedLanguageCode
+                );
+              }
               setTimeout(async () => {
                 await sendMessage(
                   business_phone_number_id,
@@ -1095,13 +1202,19 @@ app.post("/webhook", async (req, res) => {
               }, 2000);
 
               setTimeout(async () => {
-                await bhashiniTTS(
-                  enterBankDetails,
-                  message.from,
-                  selectedLanguageCode
-                );
+                if (selectedLanguageCode === "en") {
+                  sendAudio(
+                    storeOnboardingAudios.bankAccountHolder,
+                    message.from
+                  );
+                } else {
+                  await bhashiniTTS(
+                    enterBankDetails,
+                    message.from,
+                    selectedLanguageCode
+                  );
+                }
               }, 3000);
-
             }
 
             // step 3 - Cancelled Cheque Image
@@ -1261,7 +1374,6 @@ Your all-in-one platform for seamless e-commerce solutions. #VyaparLaunchpadkiMa
 
   setTimeout(async () => {
     sendAudio("852924290272348", message.from);
-
   }, 2000); // 1000 milliseconds = 1 second
   //   Sending language selection list
 
@@ -1390,10 +1502,12 @@ const downloadAudio = async (
           console.log("Transcription Result:", transcribedText);
           sendMessage(business_phone_number_id, message.from, transcribedText);
           if (serviceState === "ask_question") {
-            fetchAnswers(transcribedText, selectedLanguageCode).then((answers) => {
-              textToSpeech(answers, message.from, selectedLanguageCode);
-              sendMessage(business_phone_number_id, message.from, answers);
-            });
+            fetchAnswers(transcribedText, selectedLanguageCode).then(
+              (answers) => {
+                textToSpeech(answers, message.from, selectedLanguageCode);
+                sendMessage(business_phone_number_id, message.from, answers);
+              }
+            );
           } else {
             classifyInput(transcribedText, selectedLanguageCode).then(
               async (data) => {
@@ -1441,11 +1555,18 @@ const downloadAudio = async (
                     );
 
                     setTimeout(async () => {
-                      await bhashiniTTS(
-                        body,
-                        message.from,
-                        selectedLanguageCode
-                      );
+                      if (selectedLanguageCode === "en") {
+                        sendAudio(
+                          storeOnboardingAudios.selectCategory,
+                          message.from
+                        );
+                      } else {
+                        await bhashiniTTS(
+                          body,
+                          message.from,
+                          selectedLanguageCode
+                        );
+                      }
                     }, 1000);
 
                     console.log("   ");
@@ -1477,11 +1598,18 @@ const downloadAudio = async (
                     );
 
                     setTimeout(async () => {
-                      await bhashiniTTS(
-                        enterTitleText,
-                        message.from,
-                        selectedLanguageCode
-                      );
+                      if (selectedLanguageCode === "en") {
+                        sendAudio(
+                          storeOnboardingAudios.geolocation,
+                          message.from
+                        );
+                      } else {
+                        await bhashiniTTS(
+                          enterTitleText,
+                          message.from,
+                          selectedLanguageCode
+                        );
+                      }
                     }, 1000);
                   } else if (serviceState === "shop_address") {
                     storeData.storeDetail.address = messageText;
@@ -1498,11 +1626,18 @@ const downloadAudio = async (
                       shopPhotosText
                     );
                     setTimeout(async () => {
-                      await bhashiniTTS(
-                        shopPhotosText,
-                        message.from,
-                        selectedLanguageCode
-                      );
+                      if (selectedLanguageCode === "en") {
+                        sendAudio(
+                          storeOnboardingAudios.shopPhotos,
+                          message.from
+                        );
+                      } else {
+                        await bhashiniTTS(
+                          shopPhotosText,
+                          message.from,
+                          selectedLanguageCode
+                        );
+                      }
                     }, 1000);
                   }
                 }
